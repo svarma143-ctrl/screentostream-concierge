@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+<defs>
+<filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+<filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.055"/></feComponentTransfer></filter>
+</defs>
+
+<rect width="1600" height="900" fill="url(#kyotoSky)"/>
+<defs>
+<linearGradient id="kyotoSky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#07141d"/><stop offset=".55" stop-color="#0d2230"/><stop offset="1" stop-color="#281b1a"/></linearGradient>
+<linearGradient id="kyotoGlow" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f6c46a" stop-opacity=".9"/><stop offset="1" stop-color="#d97734" stop-opacity="0"/></linearGradient>
+<linearGradient id="kyotoStone" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#17202a"/><stop offset="1" stop-color="#080d12"/></linearGradient>
+<radialGradient id="kyotoHalo"><stop stop-color="#ffcf7a" stop-opacity=".55"/><stop offset="1" stop-color="#ffcf7a" stop-opacity="0"/></radialGradient>
+</defs>
+<circle cx="1230" cy="170" r="210" fill="url(#kyotoHalo)" filter="url(#soft)"/>
+<circle cx="1230" cy="170" r="64" fill="#f7e4b8" opacity=".9"/>
+<path d="M0 420 Q180 360 360 405 T760 380 T1120 420 T1600 370 V610 H0Z" fill="#0c1b25" opacity=".9"/>
+<g opacity=".5" fill="#0a151d">
+<path d="M120 380h230v260H120z"/><path d="M80 382l155-74 158 74z"/>
+<path d="M1030 350h310v290h-310z"/><path d="M984 352l202-90 208 90z"/>
+</g>
+<g>
+<path d="M0 560 L180 470 L310 520 L470 440 L650 530 L820 470 L980 535 L1160 455 L1330 530 L1480 470 L1600 530 V900 H0Z" fill="#0b141c"/>
+<g fill="#111c24" stroke="#26333b" stroke-width="2">
+<path d="M60 540h300v300H60z"/><path d="M390 500h330v340H390z"/><path d="M760 560h300v280H760z"/><path d="M1090 510h340v330h-340z"/><path d="M1460 560h140v280h-140z"/>
+</g>
+<g fill="#f2b45f" opacity=".85">
+<rect x="110" y="600" width="85" height="110" rx="4"/><rect x="235" y="600" width="85" height="110" rx="4"/>
+<rect x="440" y="570" width="72" height="96" rx="3"/><rect x="560" y="570" width="72" height="96" rx="3"/>
+<rect x="810" y="620" width="66" height="90" rx="3"/><rect x="930" y="620" width="66" height="90" rx="3"/>
+<rect x="1140" y="585" width="78" height="102" rx="3"/><rect x="1270" y="585" width="78" height="102" rx="3"/>
+</g>
+<g fill="#1b1310" stroke="#5d3b27" stroke-width="3">
+<path d="M110 500h190l18 46H92z"/><path d="M430 462h230l20 50H410z"/><path d="M1130 470h260l22 52H1108z"/>
+</g>
+<g>
+<g fill="url(#kyotoGlow)"><ellipse cx="300" cy="360" rx="36" ry="48"/><ellipse cx="530" cy="300" rx="30" ry="40"/><ellipse cx="1240" cy="330" rx="34" ry="46"/><ellipse cx="1420" cy="290" rx="28" ry="38"/></g>
+<g fill="#ffd894"><circle cx="300" cy="340" r="13"/><circle cx="530" cy="282" r="11"/><circle cx="1240" cy="310" r="12"/><circle cx="1420" cy="272" r="10"/></g>
+<g stroke="#39231a" stroke-width="3"><path d="M300 280v-48"/><path d="M530 230v-42"/><path d="M1240 260v-46"/><path d="M1420 230v-42"/></g>
+</g>
+<path d="M0 780 Q400 730 800 770 T1600 750 V900 H0Z" fill="url(#kyotoStone)"/>
+<path d="M0 810 Q400 760 800 800 T1600 780" fill="none" stroke="#c98a4c" stroke-width="3" opacity=".35"/>
+<g opacity=".25" fill="#f6c46a"><ellipse cx="300" cy="850" rx="100" ry="14"/><ellipse cx="900" cy="830" rx="70" ry="10"/><ellipse cx="1300" cy="860" rx="90" ry="12"/></g>
+<g opacity=".5" fill="#0a1116"><path d="M930 330h16v200h-16z"/><path d="M880 330h116v14H880z"/><path d="M890 310h96v20H890z"/><path d="M900 290h76v20H900z"/><path d="M912 270h52v20h-52z"/></g>
+
+</g>
+<rect width="1600" height="900" filter="url(#grain)" opacity=".55"/>
+</svg>

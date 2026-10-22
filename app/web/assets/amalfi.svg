@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+<defs>
+<filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+<filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.055"/></feComponentTransfer></filter>
+</defs>
+
+<defs>
+<linearGradient id="amaSky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#bfe3e5"/><stop offset=".6" stop-color="#f6e7bd"/><stop offset="1" stop-color="#f2c14e"/></linearGradient>
+<linearGradient id="amaSea" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#3e8f8e"/><stop offset="1" stop-color="#124f57"/></linearGradient>
+</defs>
+<rect width="1600" height="900" fill="url(#amaSky)"/>
+<circle cx="1220" cy="220" r="250" fill="#fff4cd" opacity=".55"/>
+<circle cx="1220" cy="220" r="70" fill="#fff9e0"/>
+<path d="M0 520 Q240 450 480 500 T960 480 T1600 520 V900 H0Z" fill="#d8c59a" opacity=".5"/>
+<g>
+<path d="M0 370 L210 300 L400 380 L590 300 L780 400 L980 320 L1180 410 L1370 330 L1600 390 V900 H0Z" fill="#2f5f53"/>
+<path d="M0 430 L230 370 L410 440 L620 360 L820 450 L1020 380 L1240 460 L1420 390 L1600 450 V900 H0Z" fill="#3c7562"/>
+<g fill="#e7d6b3"><path d="M70 460h240v300H70z"/><path d="M340 420h260v340H340z"/><path d="M620 470h250v290H620z"/><path d="M900 430h300v330H900z"/><path d="M1220 470h260v290h-260z"/></g>
+<g fill="#c9704f"><path d="M70 460h240v40H70z"/><path d="M340 420h260v40H340z"/><path d="M620 470h250v40H620z"/><path d="M900 430h300v40H900z"/><path d="M1220 470h260v40h-260z"/></g>
+<g fill="#f2c14e"><rect x="105" y="540" width="60" height="75"/><rect x="205" y="540" width="60" height="75"/><rect x="380" y="500" width="60" height="75"/><rect x="485" y="500" width="60" height="75"/><rect x="660" y="550" width="55" height="70"/><rect x="760" y="550" width="55" height="70"/><rect x="945" y="510" width="60" height="75"/><rect x="1060" y="510" width="60" height="75"/><rect x="1260" y="550" width="55" height="70"/><rect x="1360" y="550" width="55" height="70"/></g>
+<g fill="#2f4f43"><path d="M260 540q-20-70 20-120 20 80 0 120z"/><path d="M300 560q0-60 40-100 0 80-20 100z"/><path d="M1120 520q-20-80 20-130 25 90 0 130z"/><path d="M1160 540q0-60 45-100 5 80-25 100z"/></g>
+<g fill="#f2c14e"><circle cx="282" cy="430" r="15"/><circle cx="342" cy="470" r="13"/><circle cx="1142" cy="400" r="16"/><circle cx="1205" cy="450" r="14"/></g>
+</g>
+<path d="M0 760 Q300 700 620 750 T1200 730 T1600 760 V900 H0Z" fill="url(#amaSea)"/>
+<g stroke="#f7f3e8" stroke-width="3" opacity=".45"><path d="M100 820h260"/><path d="M500 850h320"/><path d="M980 810h300"/><path d="M1320 860h180"/></g>
+<g transform="translate(220 690)"><path d="M0 60 Q70 0 140 60Z" fill="#f7f3e8"/><path d="M70 60v120" stroke="#6b4f3a" stroke-width="4"/><path d="M20 180h100" stroke="#6b4f3a" stroke-width="4"/></g>
+
+<rect width="1600" height="900" filter="url(#grain)" opacity=".55"/>
+</svg>

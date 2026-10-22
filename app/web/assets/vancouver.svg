@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+<defs>
+<filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+<filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.055"/></feComponentTransfer></filter>
+</defs>
+
+<defs>
+<linearGradient id="vanSky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#9fb7b5"/><stop offset=".55" stop-color="#cfded7"/><stop offset="1" stop-color="#e9d8a6"/></linearGradient>
+<linearGradient id="vanWater" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#5f8f8a"/><stop offset="1" stop-color="#234c52"/></linearGradient>
+<linearGradient id="vanMist" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#e9f0ea" stop-opacity=".9"/><stop offset="1" stop-color="#e9f0ea" stop-opacity="0"/></linearGradient>
+</defs>
+<rect width="1600" height="900" fill="url(#vanSky)"/>
+<circle cx="1180" cy="220" r="240" fill="#f4ecd2" opacity=".5"/>
+<circle cx="1180" cy="220" r="62" fill="#f8f1dc"/>
+<g>
+<path d="M0 430 L180 260 L360 420 L520 300 L700 440 L860 330 L1040 450 L1200 340 L1380 440 L1520 370 L1600 420 V900 H0Z" fill="#54726a" opacity=".55"/>
+<path d="M0 500 L200 380 L400 500 L600 410 L800 520 L1000 430 L1200 520 L1400 440 L1600 500 V900 H0Z" fill="#3f5f58"/>
+</g>
+<rect x="0" y="430" width="1600" height="150" fill="url(#vanMist)" opacity=".6"/>
+<g fill="#25463f">
+<path d="M60 540q-20-120 40-200 10 110 0 200z"/><path d="M120 560q-10-100 45-170 5 100-15 170z"/><path d="M180 540q-25-140 35-230 20 130 0 230z"/>
+<path d="M1320 540q-20-120 40-200 10 110 0 200z"/><path d="M1390 560q-10-100 45-170 5 100-15 170z"/><path d="M1450 540q-25-140 35-230 20 130 0 230z"/>
+</g>
+<g fill="#1d3a36" opacity=".85"><path d="M240 560q-15-90 30-150 8 85-5 150z"/><path d="M280 570q-10-70 35-120 0 75-15 120z"/><path d="M1240 560q-15-90 30-150 8 85-5 150z"/><path d="M1280 570q-10-70 35-120 0 75-15 120z"/></g>
+<path d="M0 700 Q300 640 600 690 T1200 670 T1600 700 V900 H0Z" fill="url(#vanWater)"/>
+<g stroke="#d7e8e0" stroke-width="3" opacity=".35"><path d="M100 760h300"/><path d="M520 800h360"/><path d="M980 750h320"/><path d="M1360 820h180"/></g>
+<g transform="translate(360 620)">
+<path d="M0 80 Q100 20 220 80 L200 140 H20Z" fill="#7b4d3b"/>
+<path d="M20 80h180" stroke="#e9d8a6" stroke-width="4"/>
+<path d="M110 20v60" stroke="#3b2a22" stroke-width="5"/>
+<path d="M90 20h40" stroke="#3b2a22" stroke-width="5"/>
+<path d="M20 140v40M200 140v40" stroke="#3b2a22" stroke-width="5"/>
+</g>
+<g transform="translate(980 680)">
+<circle cx="60" cy="60" r="45" fill="none" stroke="#d98e4a" stroke-width="7"/>
+<circle cx="200" cy="60" r="45" fill="none" stroke="#d98e4a" stroke-width="7"/>
+<path d="M60 60h140M60 60l50-55h60l20 55" fill="none" stroke="#d98e4a" stroke-width="7"/>
+<path d="M110 5h60" stroke="#d98e4a" stroke-width="9"/>
+</g>
+<g fill="#e9d8a6" opacity=".7"><circle cx="220" cy="720" r="4"/><circle cx="300" cy="740" r="3"/><circle cx="700" cy="710" r="4"/><circle cx="1240" cy="740" r="3"/><circle cx="1440" cy="720" r="4"/></g>
+
+<rect width="1600" height="900" filter="url(#grain)" opacity=".55"/>
+</svg>

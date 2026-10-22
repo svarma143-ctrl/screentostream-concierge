@@ -1,0 +1,49 @@
+[project]
+name = "screentostream-concierge"
+version = "0.1.0"
+description = "ScreenToStream Concierge - an Alexa+ MCP server that turns Fire TV viewing moments into bookable travel and culinary experiences."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = [
+  "mcp==2.3.0",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic-settings>=2.4",
+  "openai>=1.40",
+  "PyJWT>=2.8",
+  "python-multipart>=0.0.9",
+  "jinja2>=3.1",
+  "httpx>=0.27",
+  "fastmcp==4.1.3",
+  "boto3>=1.43.116",
+]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["web/*.html", "web/*.js", "web/*.css", "web/assets/*.svg"]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+  "ruff>=0.6",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

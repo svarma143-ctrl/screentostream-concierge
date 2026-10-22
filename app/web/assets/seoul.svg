@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+<defs>
+<filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+<filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.055"/></feComponentTransfer></filter>
+</defs>
+
+<defs>
+<linearGradient id="seoSky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#111228"/><stop offset=".6" stop-color="#241b3d"/><stop offset="1" stop-color="#44203c"/></linearGradient>
+<linearGradient id="seoWet" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1d2038"/><stop offset="1" stop-color="#0b0d18"/></linearGradient>
+<radialGradient id="seoNeon"><stop stop-color="#ff5d8f" stop-opacity=".8"/><stop offset="1" stop-color="#ff5d8f" stop-opacity="0"/></radialGradient>
+<radialGradient id="seoCyan"><stop stop-color="#4fd6c8" stop-opacity=".7"/><stop offset="1" stop-color="#4fd6c8" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1600" height="900" fill="url(#seoSky)"/>
+<ellipse cx="380" cy="300" rx="300" ry="260" fill="url(#seoNeon)" opacity=".7"/>
+<ellipse cx="1180" cy="360" rx="320" ry="250" fill="url(#seoCyan)" opacity=".55"/>
+<g stroke="#8fa8d8" stroke-width="1.5" opacity=".25"><path d="M60 90l-50 260"/><path d="M250 60l-40 300"/><path d="M480 80l-30 280"/><path d="M720 50l-20 320"/><path d="M960 80l30 280"/><path d="M1200 60l20 300"/><path d="M1440 90l40 260"/></g>
+<g>
+<path d="M0 450 L160 390 L310 440 L470 370 L650 450 L820 380 L1000 450 L1180 380 L1360 450 L1520 400 L1600 440 V900 H0Z" fill="#151529"/>
+<g fill="#1b1b33" stroke="#37345c" stroke-width="2">
+<path d="M40 470h230v420H40z"/><path d="M310 430h260v460H310z"/><path d="M610 480h240v410H610z"/><path d="M890 435h270v455H890z"/><path d="M1200 480h230v410h-230z"/><path d="M1470 450h130v440h-130z"/>
+</g>
+<g fill="#ffd166" opacity=".9"><rect x="80" y="540" width="55" height="70"/><rect x="165" y="540" width="55" height="70"/><rect x="360" y="500" width="50" height="64"/><rect x="445" y="500" width="50" height="64"/><rect x="655" y="550" width="50" height="64"/><rect x="740" y="550" width="50" height="64"/><rect x="935" y="505" width="52" height="66"/><rect x="1025" y="505" width="52" height="66"/><rect x="1245" y="550" width="50" height="64"/><rect x="1330" y="550" width="50" height="64"/></g>
+<g fill="#ef476f" opacity=".95"><rect x="80" y="650" width="220" height="22"/><rect x="360" y="610" width="180" height="18"/><rect x="655" y="660" width="160" height="18"/><rect x="935" y="615" width="200" height="20"/><rect x="1245" y="660" width="160" height="18"/></g>
+</g>
+<g transform="translate(0 500)">
+<path d="M80 120h300l40 60H40z" fill="#0e1220" stroke="#3a4270" stroke-width="3"/>
+<path d="M130 120l20-70h180l20 70z" fill="#12182a" stroke="#3a4270" stroke-width="3"/>
+<path d="M40 180h380" stroke="#4fd6c8" stroke-width="4" opacity=".6"/>
+</g>
+<g transform="translate(720 520)">
+<path d="M100 0 Q190 100 200 230 H0 Q10 100 100 0Z" fill="#2c2c50" stroke="#6c6aa8" stroke-width="3"/>
+<path d="M100 0v230" stroke="#6c6aa8" stroke-width="3"/>
+<path d="M100 230v160" stroke="#4fd6c8" stroke-width="4"/>
+<circle cx="100" cy="390" r="8" fill="#4fd6c8"/>
+</g>
+<path d="M0 780 Q400 750 800 780 T1600 760 V900 H0Z" fill="url(#seoWet)"/>
+<g opacity=".35"><ellipse cx="340" cy="840" rx="180" ry="16" fill="#ff5d8f"/><ellipse cx="1080" cy="860" rx="220" ry="18" fill="#4fd6c8"/><ellipse cx="760" cy="890" rx="160" ry="12" fill="#ffd166"/></g>
+<g stroke="#8fa8d8" stroke-width="1.2" opacity=".3"><path d="M100 0l-30 900"/><path d="M420 0l-20 900"/><path d="M780 0l10 900"/><path d="M1120 0l30 900"/><path d="M1480 0l40 900"/></g>
+
+<rect width="1600" height="900" filter="url(#grain)" opacity=".55"/>
+</svg>

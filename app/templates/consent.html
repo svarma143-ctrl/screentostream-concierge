@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Link {{ app_name }}</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070c16;
+      --panel: #0e1626;
+      --panel-2: #121d31;
+      --line: #24334d;
+      --text: #eaf1ff;
+      --muted: #93a5c4;
+      --amber: #f0b35b;
+      --teal: #58d6c2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 500px at 15% -10%, rgba(240, 179, 91, .18), transparent 60%),
+        radial-gradient(800px 500px at 100% 100%, rgba(88, 214, 194, .12), transparent 55%),
+        var(--bg);
+    }
+    .card {
+      width: min(520px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(170deg, rgba(255,255,255,.035), transparent 35%), var(--panel);
+      box-shadow: 0 30px 80px rgba(0,0,0,.45);
+      overflow: hidden;
+    }
+    .top {
+      padding: 26px 28px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .mark {
+      width: 44px; height: 44px;
+      border-radius: 13px;
+      display: grid; place-items: center;
+      font-size: 21px;
+      background: linear-gradient(145deg, #f0b35b, #c8783a);
+      color: #1a1206;
+      box-shadow: 0 8px 24px rgba(240,179,91,.25);
+    }
+    .top h1 { font-size: 17px; margin: 0; letter-spacing: -.01em; }
+    .top p { margin: 3px 0 0; color: var(--muted); font-size: 12.5px; }
+    .body { padding: 24px 28px 26px; }
+    .intro { margin: 0 0 18px; color: #c6d4ea; font-size: 14.5px; line-height: 1.55; }
+    .client {
+      display: flex; gap: 12px; align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-2);
+      margin-bottom: 18px;
+    }
+    .client .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 5px rgba(88,214,194,.12); }
+    .client b { font-size: 13.5px; }
+    .client span { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+    h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 0 0 10px; }
+    ul { list-style: none; padding: 0; margin: 0 0 20px; display: grid; gap: 10px; }
+    li { display: flex; gap: 10px; font-size: 13px; line-height: 1.45; color: #c6d4ea; }
+    li .check { color: var(--teal); flex: 0 0 auto; font-weight: 700; }
+    .meta {
+      font-size: 11px; color: var(--muted);
+      background: #0a1220; border: 1px solid #1b2940; border-radius: 10px;
+      padding: 10px 12px; margin-bottom: 20px; word-break: break-all;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
+    button {
+      border-radius: 12px; border: 1px solid var(--line);
+      padding: 12px 16px; font-size: 13.5px; font-weight: 650;
+      cursor: pointer; font-family: inherit;
+    }
+    .cancel { background: transparent; color: var(--muted); }
+    .approve { background: linear-gradient(180deg, #f2bd6c, #d9903f); color: #1b1206; border-color: transparent; }
+    button:hover { filter: brightness(1.06); }
+    .fine { margin: 16px 0 0; font-size: 11px; line-height: 1.5; color: #7f90ad; text-align: center; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="top">
+      <div class="mark">◈</div>
+      <div>
+        <h1>Link your {{ app_name }} account</h1>
+        <p>Secure account linking · OAuth 2.1 + PKCE</p>
+      </div>
+    </div>
+    <div class="body">
+      <p class="intro">Alexa+ would like to connect to your concierge so it can turn what you're watching into a real trip.</p>
+
+      <div class="client">
+        <span class="dot"></span>
+        <div>
+          <b>{{ client_name }}</b>
+          <span>{{ client_id }} · signed in as Ava</span>
+        </div>
+      </div>
+
+      <h2>This will allow</h2>
+      <ul>
+        {% for scope in scopes %}
+        <li><span class="check">✓</span><span>{{ scope.description }}</span></li>
+        {% endfor %}
+      </ul>
+
+      <div class="meta">Resource: {{ resource }}</div>
+
+      <form method="post" action="/oauth/authorize">
+        <input type="hidden" name="request_token" value="{{ request_token }}" />
+        <input type="hidden" name="csrf" value="{{ csrf }}" />
+        <div class="actions">
+          <button class="cancel" type="submit" name="decision" value="deny">Cancel</button>
+          <button class="approve" type="submit" name="decision" value="approve">Link account</button>
+        </div>
+      </form>
+
+      <p class="fine">This is a hackathon demo. No payment credentials are collected and bookings are simulated.</p>
+    </div>
+  </main>
+</body>
+</html>

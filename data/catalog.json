@@ -1,0 +1,640 @@
+{
+  "kyoto": {
+    "name": "Kyoto",
+    "country": "Japan",
+    "tagline": "Lantern-lit alleys, quiet gardens, and a slower kind of luxury.",
+    "currency": "USD",
+    "emoji": "🏮",
+    "palette": ["#0b1f2a", "#d98e4a", "#f4e3c8"],
+    "image": "/static/assets/kyoto.svg",
+    "timezone": "Asia/Tokyo",
+    "seasons": ["spring", "autumn", "winter"],
+    "stays": [
+      {
+        "id": "stay_kyoto_machiya",
+        "name": "Machiya Lantern House",
+        "kind": "Boutique machiya",
+        "neighborhood": "Pontocho",
+        "rating": 4.9,
+        "reviews": 214,
+        "price_per_night": 42000,
+        "max_guests": 4,
+        "min_nights": 2,
+        "tags": ["design", "walkable", "river-view", "food-forward", "quiet"],
+        "blurb": "A restored 1920s townhouse with cedar soaking tubs, a tiny courtyard garden, and a private entrance onto the Pontocho lantern alley.",
+        "seasons": ["spring", "autumn", "winter"],
+        "amenities": ["Private onsen", "Breakfast", "Bikes", "Concierge"]
+      },
+      {
+        "id": "stay_kyoto_ryokan",
+        "name": "Higashiyama Mist Ryokan",
+        "kind": "Modern ryokan",
+        "neighborhood": "Higashiyama",
+        "rating": 4.8,
+        "reviews": 387,
+        "price_per_night": 68000,
+        "max_guests": 3,
+        "min_nights": 2,
+        "tags": ["luxury", "garden", "quiet", "wellness", "design"],
+        "blurb": "Nine suites arranged around a moss garden, with kaiseki breakfast and a bath that looks straight into the maple canopy.",
+        "seasons": ["spring", "summer", "autumn", "winter"],
+        "amenities": ["Kaiseki breakfast", "Garden bath", "Tea ceremony", "Valet"]
+      },
+      {
+        "id": "stay_kyoto_kitchen",
+        "name": "Nishiki Kitchen Loft",
+        "kind": "Design apartment",
+        "neighborhood": "Nishiki Market",
+        "rating": 4.7,
+        "reviews": 168,
+        "price_per_night": 26500,
+        "max_guests": 2,
+        "min_nights": 3,
+        "tags": ["food-forward", "walkable", "value", "local"],
+        "blurb": "A compact chef's loft above the market with a copper counter, market credit, and a pocket guide to the vendors who open at 6am.",
+        "seasons": ["spring", "summer", "autumn", "winter"],
+        "amenities": ["Market credit", "Kitchen", "Laundry", "Local guide"]
+      }
+    ],
+    "experiences": [
+      {
+        "id": "exp_kyoto_kaiseki",
+        "name": "Kaiseki counter with Chef Mori",
+        "category": "food",
+        "duration_hours": 3,
+        "price_per_person": 18500,
+        "tags": ["food", "intimate", "design", "local"],
+        "blurb": "Eight seasonal courses at a six-seat counter, built around the morning's Nishiki Market delivery.",
+        "includes": ["8 courses", "Sake pairing", "Market walk"]
+      },
+      {
+        "id": "exp_kyoto_lanterns",
+        "name": "Pontocho after dark",
+        "category": "culture",
+        "duration_hours": 2,
+        "price_per_person": 9500,
+        "tags": ["walkable", "culture", "night", "photography"],
+        "blurb": "A resident-led walk through the lantern alleys, teahouse history, and the riverbank where the city unwinds.",
+        "includes": ["Local host", "Tea stop", "Photo route"]
+      }
+    ],
+    "dining": [
+      {
+        "id": "dine_kyoto_yudofu",
+        "name": "Kamo River Yudofu",
+        "cuisine": "Kyoto tofu kaiseki",
+        "price_per_person": 8800,
+        "tags": ["vegetarian", "quiet", "river-view"],
+        "blurb": "Silken tofu simmered in kombu dashi, served on a riverside veranda with yuzu kosho and seasonal pickles.",
+        "signature_dish": "Yudofu with yuzu kosho"
+      }
+    ]
+  },
+  "lisbon": {
+    "name": "Lisbon",
+    "country": "Portugal",
+    "tagline": "Tiled hills, salt-air taverns, and the best light in Europe.",
+    "currency": "USD",
+    "emoji": "🚋",
+    "palette": ["#102a43", "#e07a5f", "#f2cc8f"],
+    "image": "/static/assets/lisbon.svg",
+    "timezone": "Europe/Lisbon",
+    "seasons": ["spring", "summer", "autumn"],
+    "stays": [
+      {
+        "id": "stay_lisbon_azulejo",
+        "name": "Casa do Azulejo",
+        "kind": "Townhouse hotel",
+        "neighborhood": "Alfama",
+        "rating": 4.8,
+        "reviews": 302,
+        "price_per_night": 26000,
+        "max_guests": 4,
+        "min_nights": 2,
+        "tags": ["design", "walkable", "view", "food-forward"],
+        "blurb": "A 1760s townhouse wrapped in hand-painted tiles, with a rooftop kitchen and views across the Tejo.",
+        "seasons": ["spring", "summer", "autumn"],
+        "amenities": ["Rooftop", "Breakfast", "Wine cellar", "Concierge"]
+      },
+      {
+        "id": "stay_lisbon_bica",
+        "name": "Bica Light Studio",
+        "kind": "Design studio",
+        "neighborhood": "Bica",
+        "rating": 4.6,
+        "reviews": 141,
+        "price_per_night": 17500,
+        "max_guests": 2,
+        "min_nights": 3,
+        "tags": ["value", "walkable", "local", "view"],
+        "blurb": "A sunlit studio above a neighborhood bakery, with a Juliet balcony and a very good reason to wake up early.",
+        "seasons": ["spring", "summer", "autumn", "winter"],
+        "amenities": ["Balcony", "Kitchenette", "Bakery credit", "Bikes"]
+      },
+      {
+        "id": "stay_lisbon_estrela",
+        "name": "Estrela Garden Suites",
+        "kind": "Garden hotel",
+        "neighborhood": "Estrela",
+        "rating": 4.9,
+        "reviews": 226,
+        "price_per_night": 39000,
+        "max_guests": 4,
+        "min_nights": 2,
+        "tags": ["quiet", "garden", "luxury", "family"],
+        "blurb": "Twelve suites opening onto a walled garden, a short tram ride from the river and a long way from the crowds.",
+        "seasons": ["spring", "summer", "autumn", "winter"],
+        "amenities": ["Pool", "Garden", "Breakfast", "Family suites"]
+      }
+    ],
+    "experiences": [
+      {
+        "id": "exp_lisbon_market",
+        "name": "Mercado da Ribeira chef's table",
+        "category": "food",
+        "duration_hours": 3,
+        "price_per_person": 12500,
+        "tags": ["food", "market", "local", "fun"],
+        "blurb": "Shop the market with a chef, then cook a four-course Portuguese lunch in a private kitchen above the stalls.",
+        "includes": ["Market tour", "Cooking class", "Lunch + wine"]
+      },
+      {
+        "id": "exp_lisbon_tram",
+        "name": "Sunset tram & fado",
+        "category": "culture",
+        "duration_hours": 2,
+        "price_per_person": 8500,
+        "tags": ["culture", "music", "night", "view"],
+        "blurb": "Ride a restored tram to Graça, then settle into a tiny fado house for a glass of vinho verde.",
+        "includes": ["Private tram", "Fado set", "Wine"]
+      }
+    ],
+    "dining": [
+      {
+        "id": "dine_lisbon_bacalhau",
+        "name": "Taberna do Beco",
+        "cuisine": "Modern Portuguese",
+        "price_per_person": 7200,
+        "tags": ["local", "seafood", "casual"],
+        "blurb": "Bacalhau à Brás tangled with shoestring potatoes and olives, served at a six-table taverna in a tiled alley.",
+        "signature_dish": "Bacalhau à Brás"
+      }
+    ]
+  },
+  "copenhagen": {
+    "name": "Copenhagen",
+    "country": "Denmark",
+    "tagline": "Harbor light, rye bread, and design you can live in.",
+    "currency": "USD",
+    "emoji": "🚲",
+    "palette": ["#123c4a", "#e3b23c", "#f7f0e3"],
+    "image": "/static/assets/copenhagen.svg",
+    "timezone": "Europe/Copenhagen",
+    "seasons": ["spring", "summer", "autumn", "winter"],
+    "stays": [
+      {
+        "id": "stay_cph_havn",
+        "name": "Havn Studio",
+        "kind": "Harbor loft",
+        "neighborhood": "Nørrebro",
+        "rating": 4.8,
+        "reviews": 190,
+        "price_per_night": 34000,
+        "max_guests": 3,
+        "min_nights": 2,
+        "tags": ["design", "walkable", "food-forward", "local"],
+        "blurb": "A pale-oak loft above a bakery on the lake, with bikes, a record player, and a very serious coffee setup.",
+        "seasons": ["spring", "summer", "autumn", "winter"],
+        "amenities": ["Bikes", "Espresso bar", "Sauna", "Laundry"]
+      },
+      {
+        "id": "stay_cph_kanal",
+        "name": "Kanal House",
+        "kind": "Canal hotel",
+        "neighborhood": "Christianshavn",
+        "rating": 4.7,
+        "reviews": 412,
+        "price_per_night": 52000,
+        "max_guests": 4,
+        "min_nights": 2,
+        "tags": ["luxury", "waterfront", "quiet", "design"],
+        "blurb": "Forty rooms in a converted grain warehouse, with a floating sauna and breakfast on the canal deck.",
+        "seasons": ["spring", "summer", "autumn", "winter"],
+        "amenities": ["Floating sauna", "Canal deck", "Breakfast", "Bar"]
+      }
+    ],
+    "experiences": [
+      {
+        "id": "exp_cph_bakery",
+        "name": "Rye & fire bakery morning",
+        "category": "food",
+        "duration_hours": 3,
+        "price_per_person": 11000,
+        "tags": ["food", "hands-on", "local", "morning"],
+        "blurb": "Shape rye, laminate pastry, and eat still-warm cardamom buns with the bakers who start at 4am.",
+        "includes": ["Baking class", "Breakfast", "Starter kit"]
+      },
+      {
+        "id": "exp_cph_design",
+        "name": "Design walk with a local curator",
+        "category": "culture",
+        "duration_hours": 2,
+        "price_per_person": 9000,
+        "tags": ["design", "walkable", "culture"],
+        "blurb": "A curator's route through independent studios, a furniture archive, and the best coffee in the design district.",
+        "includes": ["Curator host", "Studio visit", "Coffee"]
+      }
+    ],
+    "dining": [
+      {
+        "id": "dine_cph_smorgas",
+        "name": "Bord & Brød",
+        "cuisine": "New Nordic smørrebrød",
+        "price_per_person": 7800,
+        "tags": ["local", "seafood", "design"],
+        "blurb": "Open-faced rye with pickled herring, smoked egg, and dill oil, in a dining room that feels like a very good friend's apartment.",
+        "signature_dish": "Smørrebrød with pickled herring"
+      }
+    ]
+  },
+  "oaxaca": {
+    "name": "Oaxaca",
+    "country": "Mexico",
+    "tagline": "Smoke, chocolate, and color in every courtyard.",
+    "currency": "USD",
+    "emoji": "🌶️",
+    "palette": ["#3d1f2b", "#e4572e", "#f6c85f"],
+    "image": "/static/assets/oaxaca.svg",
+    "timezone": "America/Mexico_City",
+    "seasons": ["spring", "autumn", "winter"],
+    "stays": [
+      {
+        "id": "stay_oaxaca_cacao",
+        "name": "Casa Cacao",
+        "kind": "Courtyard casa",
+        "neighborhood": "Centro",
+        "rating": 4.9,
+        "reviews": 176,
+        "price_per_night": 18000,
+        "max_guests": 4,
+        "min_nights": 2,
+        "tags": ["food-forward", "design", "walkable", "local"],
+        "blurb": "A magenta courtyard house with a cacao bar, six rooms, and a rooftop that catches the evening bell from Santo Domingo.",
+        "seasons": ["spring", "autumn", "winter"],
+        "amenities": ["Cacao bar", "Rooftop", "Breakfast", "Mezcal library"]
+      },
+      {
+        "id": "stay_oaxaca_mezcal",
+        "name": "Ruta del Mezcal House",
+        "kind": "Boutique inn",
+        "neighborhood": "Jalatlaco",
+        "rating": 4.7,
+        "reviews": 98,
+        "price_per_night": 24000,
+        "max_guests": 2,
+        "min_nights": 3,
+        "tags": ["quiet", "design", "local", "adults"],
+        "blurb": "Four rooms around a jacaranda tree, with a mezcal tasting room and a resident dog named Mole.",
+        "seasons": ["spring", "autumn", "winter"],
+        "amenities": ["Mezcal tastings", "Garden", "Breakfast", "Adults only"]
+      }
+    ],
+    "experiences": [
+      {
+        "id": "exp_oaxaca_market",
+        "name": "Mercado 20 de Noviembre at dawn",
+        "category": "food",
+        "duration_hours": 3,
+        "price_per_person": 8500,
+        "tags": ["food", "market", "local", "morning"],
+        "blurb": "Drink tejate with the market cooks, taste three moles, and learn which chile goes home with you.",
+        "includes": ["Market tour", "6 tastings", "Recipe cards"]
+      },
+      {
+        "id": "exp_oaxaca_textile",
+        "name": "Natural-dye textile studio",
+        "category": "culture",
+        "duration_hours": 3,
+        "price_per_person": 10500,
+        "tags": ["craft", "culture", "hands-on", "design"],
+        "blurb": "Work with cochineal, indigo, and marigold in a family studio, then dye a scarf to take home.",
+        "includes": ["Studio visit", "Dye workshop", "Scarf"]
+      }
+    ],
+    "dining": [
+      {
+        "id": "dine_oaxaca_tlayuda",
+        "name": "Humo & Maíz",
+        "cuisine": "Oaxacan wood-fire",
+        "price_per_person": 5600,
+        "tags": ["local", "vegetarian", "casual"],
+        "blurb": "Tlayudas crisped over mesquite, with black beans, quesillo, and a salsa flight that starts mild and ends in a story.",
+        "signature_dish": "Tlayuda with black beans and quesillo"
+      }
+    ]
+  },
+  "seoul": {
+    "name": "Seoul",
+    "country": "South Korea",
+    "tagline": "Hanok roofs, neon alleys, and a city that never stops simmering.",
+    "currency": "USD",
+    "emoji": "🍲",
+    "palette": ["#1b1f3b", "#ef476f", "#ffd166"],
+    "image": "/static/assets/seoul.svg",
+    "timezone": "Asia/Seoul",
+    "seasons": ["spring", "autumn", "winter"],
+    "stays": [
+      {
+        "id": "stay_seoul_hanok",
+        "name": "Hanok Steam House",
+        "kind": "Hanok guesthouse",
+        "neighborhood": "Bukchon",
+        "rating": 4.8,
+        "reviews": 243,
+        "price_per_night": 21000,
+        "max_guests": 4,
+        "min_nights": 2,
+        "tags": ["design", "quiet", "walkable", "local"],
+        "blurb": "A 1930s hanok with ondol floors, a persimmon tree, and a breakfast table that fills up with banchan.",
+        "seasons": ["spring", "autumn", "winter"],
+        "amenities": ["Ondol", "Courtyard", "Breakfast", "Tea room"]
+      },
+      {
+        "id": "stay_seoul_river",
+        "name": "Riverlight Hotel",
+        "kind": "Design hotel",
+        "neighborhood": "Yongsan",
+        "rating": 4.7,
+        "reviews": 519,
+        "price_per_night": 33000,
+        "max_guests": 3,
+        "min_nights": 2,
+        "tags": ["view", "luxury", "design", "nightlife"],
+        "blurb": "Floor-to-ceiling windows over the Han, a rooftop bath, and a lobby that smells faintly of pine.",
+        "seasons": ["spring", "summer", "autumn", "winter"],
+        "amenities": ["River view", "Rooftop bath", "Gym", "Bar"]
+      }
+    ],
+    "experiences": [
+      {
+        "id": "exp_seoul_market",
+        "name": "Gwangjang market night crawl",
+        "category": "food",
+        "duration_hours": 3,
+        "price_per_person": 9500,
+        "tags": ["food", "market", "night", "local"],
+        "blurb": "Bindaetteok, mayak gimbap, and a table-side lesson in how to order like a regular.",
+        "includes": ["6 tastings", "Soju pairing", "Market guide"]
+      },
+      {
+        "id": "exp_seoul_ceramic",
+        "name": "Moon jar ceramics studio",
+        "category": "culture",
+        "duration_hours": 2,
+        "price_per_person": 12000,
+        "tags": ["craft", "design", "hands-on", "quiet"],
+        "blurb": "Throw a small moon jar in a Bukchon studio, then walk the ridge to a tea house with your still-wet work.",
+        "includes": ["Studio lesson", "Clay + firing", "Tea"]
+      }
+    ],
+    "dining": [
+      {
+        "id": "dine_seoul_jjigae",
+        "name": "Simmer House",
+        "cuisine": "Korean home cooking",
+        "price_per_person": 6200,
+        "tags": ["local", "comfort", "vegetarian-friendly"],
+        "blurb": "Kimchi jjigae bubbling in a stone pot, with rice, seaweed, and a rotating cast of banchan.",
+        "signature_dish": "Kimchi jjigae"
+      }
+    ]
+  },
+  "amalfi": {
+    "name": "Amalfi Coast",
+    "country": "Italy",
+    "tagline": "Lemon groves, vertigo views, and long lunches by the water.",
+    "currency": "USD",
+    "emoji": "🍋",
+    "palette": ["#0f3d3e", "#f2c14e", "#f7f3e8"],
+    "image": "/static/assets/amalfi.svg",
+    "timezone": "Europe/Rome",
+    "seasons": ["spring", "summer", "autumn"],
+    "stays": [
+      {
+        "id": "stay_amalfi_limone",
+        "name": "Villa Limone",
+        "kind": "Cliffside villa",
+        "neighborhood": "Praiano",
+        "rating": 4.9,
+        "reviews": 131,
+        "price_per_night": 52000,
+        "max_guests": 6,
+        "min_nights": 3,
+        "tags": ["view", "luxury", "quiet", "food-forward"],
+        "blurb": "A terraced villa in a lemon grove, with a sea-facing pool and a kitchen that opens to the evening air.",
+        "seasons": ["spring", "summer", "autumn"],
+        "amenities": ["Private pool", "Lemon grove", "Chef on request", "Sea access"]
+      },
+      {
+        "id": "stay_amalfi_salt",
+        "name": "Salt & Stone Rooms",
+        "kind": "Small hotel",
+        "neighborhood": "Amalfi",
+        "rating": 4.6,
+        "reviews": 289,
+        "price_per_night": 38500,
+        "max_guests": 3,
+        "min_nights": 2,
+        "tags": ["value", "view", "walkable", "design"],
+        "blurb": "Eight whitewashed rooms above the harbor, with a breakfast terrace and a very short walk to the ferry.",
+        "seasons": ["spring", "summer", "autumn"],
+        "amenities": ["Terrace", "Breakfast", "Ferry pickup", "Beach club"]
+      }
+    ],
+    "experiences": [
+      {
+        "id": "exp_amalfi_pasta",
+        "name": "Lemon terrace pasta lesson",
+        "category": "food",
+        "duration_hours": 3,
+        "price_per_person": 14500,
+        "tags": ["food", "hands-on", "view", "local"],
+        "blurb": "Hand-cut tagliolini with lemons picked ten steps away, taught by a nonna with strong opinions about butter.",
+        "includes": ["Cooking class", "Lunch", "Limoncello"]
+      },
+      {
+        "id": "exp_amalfi_boat",
+        "name": "Gozzo sunset sail",
+        "category": "culture",
+        "duration_hours": 2,
+        "price_per_person": 16000,
+        "tags": ["water", "view", "romantic", "quiet"],
+        "blurb": "A wooden gozzo, a bottle of Falanghina, and the coastline turning gold from Praiano to Positano.",
+        "includes": ["Private boat", "Wine + snacks", "Swim stop"]
+      }
+    ],
+    "dining": [
+      {
+        "id": "dine_amalfi_lemon",
+        "name": "Terrazza Limone",
+        "cuisine": "Coastal Italian",
+        "price_per_person": 9800,
+        "tags": ["view", "seafood", "romantic"],
+        "blurb": "Lemon spaghetti tangled with bottarga and zucchini blossoms, served under a pergola of vines.",
+        "signature_dish": "Lemon spaghetti with bottarga"
+      }
+    ]
+  },
+  "marrakech": {
+    "name": "Marrakech",
+    "country": "Morocco",
+    "tagline": "Courtyards, spice, and the Atlas Mountains at the end of the street.",
+    "currency": "USD",
+    "emoji": "🪔",
+    "palette": ["#2d1b2e", "#c14953", "#e8b86d"],
+    "image": "/static/assets/marrakech.svg",
+    "timezone": "Africa/Casablanca",
+    "seasons": ["spring", "autumn", "winter"],
+    "stays": [
+      {
+        "id": "stay_marrakech_riad",
+        "name": "Riad Zellige",
+        "kind": "Riad",
+        "neighborhood": "Medina",
+        "rating": 4.8,
+        "reviews": 207,
+        "price_per_night": 19000,
+        "max_guests": 4,
+        "min_nights": 2,
+        "tags": ["design", "quiet", "local", "food-forward"],
+        "blurb": "Seven rooms around a tiled courtyard, with a plunge pool, a rooftop breakfast, and a hammam downstairs.",
+        "seasons": ["spring", "autumn", "winter"],
+        "amenities": ["Plunge pool", "Hammam", "Rooftop", "Cooking class"]
+      },
+      {
+        "id": "stay_marrakech_atlas",
+        "name": "Atlas Garden Retreat",
+        "kind": "Garden retreat",
+        "neighborhood": "Route de Fès",
+        "rating": 4.9,
+        "reviews": 154,
+        "price_per_night": 31000,
+        "max_guests": 5,
+        "min_nights": 3,
+        "tags": ["garden", "quiet", "luxury", "wellness"],
+        "blurb": "An olive-grove estate with twelve suites, a long pool, and the Atlas Mountains doing the decorating.",
+        "seasons": ["spring", "autumn", "winter"],
+        "amenities": ["Pool", "Spa", "Garden", "Airport transfer"]
+      }
+    ],
+    "experiences": [
+      {
+        "id": "exp_marrakech_spice",
+        "name": "Spice souk & tagine workshop",
+        "category": "food",
+        "duration_hours": 3,
+        "price_per_person": 7500,
+        "tags": ["food", "market", "hands-on", "local"],
+        "blurb": "Build a ras el hanout from the souk, then slow-cook a tagine in a riad kitchen while it rains outside (or doesn't).",
+        "includes": ["Spice tour", "Cooking class", "Lunch"]
+      },
+      {
+        "id": "exp_marrakech_atlas",
+        "name": "Atlas day with a Berber guide",
+        "category": "culture",
+        "duration_hours": 6,
+        "price_per_person": 13500,
+        "tags": ["nature", "culture", "hike", "view"],
+        "blurb": "A valley walk, mint tea with a family, and a picnic above the tree line with a guide who knows every switchback.",
+        "includes": ["Private guide", "Transport", "Picnic"]
+      }
+    ],
+    "dining": [
+      {
+        "id": "dine_marrakech_tagine",
+        "name": "Dar Saffron",
+        "cuisine": "Moroccan",
+        "price_per_person": 6400,
+        "tags": ["local", "vegetarian", "romantic"],
+        "blurb": "Apricot and almond tagine, saffron rice, and a courtyard that stays cool until the lanterns come on.",
+        "signature_dish": "Apricot and almond tagine"
+      }
+    ]
+  },
+  "vancouver": {
+    "name": "Vancouver",
+    "country": "Canada",
+    "tagline": "Rainforest on one side, Pacific on the other, dinner in between.",
+    "currency": "USD",
+    "emoji": "🌲",
+    "palette": ["#0c2f3a", "#3f8f7b", "#e9d8a6"],
+    "image": "/static/assets/vancouver.svg",
+    "timezone": "America/Vancouver",
+    "seasons": ["spring", "summer", "autumn"],
+    "stays": [
+      {
+        "id": "stay_yvr_pier",
+        "name": "Pier 7 Loft",
+        "kind": "Waterfront loft",
+        "neighborhood": "Granville Island",
+        "rating": 4.7,
+        "reviews": 188,
+        "price_per_night": 29000,
+        "max_guests": 4,
+        "min_nights": 2,
+        "tags": ["waterfront", "food-forward", "walkable", "design"],
+        "blurb": "A timber loft over the market with a crab pot, a record player, and a water taxi stop at the door.",
+        "seasons": ["spring", "summer", "autumn", "winter"],
+        "amenities": ["Water taxi", "Kitchen", "Bikes", "Market credit"]
+      },
+      {
+        "id": "stay_yvr_forest",
+        "name": "Forest Edge House",
+        "kind": "Rainforest retreat",
+        "neighborhood": "North Vancouver",
+        "rating": 4.9,
+        "reviews": 112,
+        "price_per_night": 45000,
+        "max_guests": 6,
+        "min_nights": 3,
+        "tags": ["nature", "quiet", "design", "wellness"],
+        "blurb": "A cedar house at the trailhead, with a wood-fired tub, floor-to-ceiling forest, and no reason to hurry.",
+        "seasons": ["spring", "summer", "autumn", "winter"],
+        "amenities": ["Wood-fired tub", "Sauna", "Trail access", "Fireplace"]
+      }
+    ],
+    "experiences": [
+      {
+        "id": "exp_yvr_forage",
+        "name": "Temperate rainforest forage",
+        "category": "nature",
+        "duration_hours": 4,
+        "price_per_person": 11500,
+        "tags": ["nature", "food", "hike", "local"],
+        "blurb": "Forage mushrooms, salal, and sea asparagus with a chef-guide, then cook it all over a driftwood fire.",
+        "includes": ["Guide", "Foraging kit", "Fire lunch"]
+      },
+      {
+        "id": "exp_yvr_prawn",
+        "name": "Spot prawn boat & shucking lesson",
+        "category": "food",
+        "duration_hours": 3,
+        "price_per_person": 15500,
+        "tags": ["water", "food", "hands-on", "local"],
+        "blurb": "Head out at golden hour, pull traps with a commercial fisher, and eat prawns within minutes of landing.",
+        "includes": ["Boat trip", "Prawn feast", "Oyster shucking"]
+      }
+    ],
+    "dining": [
+      {
+        "id": "dine_yvr_prawn",
+        "name": "Tide & Cedar",
+        "cuisine": "Pacific Northwest",
+        "price_per_person": 8200,
+        "tags": ["seafood", "local", "waterfront"],
+        "blurb": "Spot prawns grilled over cedar, with sea asparagus, cultured butter, and a view of the harbour lights.",
+        "signature_dish": "Cedar-grilled spot prawns"
+      }
+    ]
+  }
+}

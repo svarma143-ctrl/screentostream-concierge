@@ -1,0 +1,48 @@
+name: Docker build verification
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-healthcheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build --tag screentostream-concierge:ci .
+
+      - name: Start container
+        run: |
+          docker run --detach \
+            --name screentostream-concierge-ci \
+            --publish 8000:8000 \
+            --env PUBLIC_BASE_URL=http://127.0.0.1:8000 \
+            --env LLM_MODE=mock \
+            screentostream-concierge:ci
+
+      - name: Wait for health endpoint
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/api/health >/dev/null; then
+              echo "Health check passed."
+              curl --silent http://127.0.0.1:8000/api/health
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Container did not become healthy." >&2
+          docker logs screentostream-concierge-ci >&2
+          exit 1
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs screentostream-concierge-ci || true
+
+      - name: Stop container
+        if: always()
+        run: docker rm --force screentostream-concierge-ci || true

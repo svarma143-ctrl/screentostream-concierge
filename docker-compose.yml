@@ -1,0 +1,17 @@
+services:
+  concierge:
+    build: .
+    image: screentostream-concierge:latest
+    ports:
+      - "${PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      # Inside the container the simulator must call the service by its
+      # container-local address, not the public tunnel URL.
+      INTERNAL_MCP_URL: http://127.0.0.1:8000/mcp
+      DATABASE_PATH: /app/runtime/concierge.db
+      RUNTIME_DIR: /app/runtime
+    volumes:
+      - ./runtime:/app/runtime
+    restart: unless-stopped
