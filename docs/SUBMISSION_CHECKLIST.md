@@ -62,7 +62,7 @@ console, **optional** = useful but not required.
 | Container health check | done | `docs/DOCKER_VERIFICATION.md` |
 | In-container MCP smoke | done | `docs/DOCKER_VERIFICATION.md` |
 | Dockerfile lint | done | `hadolint Dockerfile` |
-| GitHub Actions | pending | Workflows exist; directory is not yet a git repository |
+| GitHub Actions | done | Python checks and Docker build/health check passed on the first push |
 | Demo recording | optional | See `README.md` simulator section |
 
 ---
@@ -78,8 +78,8 @@ console, **optional** = useful but not required.
 - [x] Product feedback
 - [x] From-zero AWS account guide
 - [x] CI workflows for tests and Docker
-- [ ] Push repository to GitHub
-- [ ] Confirm Actions pass after the first push
+- [x] Push repository to GitHub
+- [x] Confirm Actions pass after the first push
 - [ ] Add the public repository URL to the challenge submission
 - [ ] Record the 2–3 minute demo
 - [ ] Confirm the final public tunnel URL before Alexa+ onboarding

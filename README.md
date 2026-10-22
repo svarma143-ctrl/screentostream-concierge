@@ -338,7 +338,7 @@ The compose file persists SQLite and uploaded frames in `./runtime`. Set `PUBLIC
 
 The image was built and exercised locally through a Lima ARM64 VM: the container reached `healthy`, and the full OAuth/MCP smoke test passed inside it. `hadolint Dockerfile` is also clean. See [docs/DOCKER_VERIFICATION.md](docs/DOCKER_VERIFICATION.md) for the commands and output.
 
-When the repository is pushed to GitHub, `.github/workflows/ci.yml` runs Ruff and pytest, and `.github/workflows/docker-check.yml` repeats the build and `/api/health` check. The workflows have not run yet because this directory is not a git repository.
+`.github/workflows/ci.yml` runs Ruff and pytest, and `.github/workflows/docker-check.yml` repeats the build and `/api/health` check. Both passed on the first push to [GitHub Actions](https://github.com/svarma143-ctrl/screentostream-concierge/actions).
 
 ### Public tunnel
 
@@ -481,14 +481,13 @@ docs/              Alexa+ integration, AWS blueprint, friction log, feedback
 - Typed intent mapping, prompt bundles, persistent context chain, agent matrix route
 - Frame image metadata, deterministic visual cards, and the Bedrock/MiniMax card adapter
 - Amazon Bedrock Runtime adapter (Converse, multimodal frame blocks, Titan/Nova image generation) with mocked-runtime tests
-- `make bedrock-check` live readiness gate, plus CI workflows for Python checks and the Docker build/health check
+- `make bedrock-check` live readiness gate; GitHub Actions Python and Docker workflows passed on the first push
 
 **Not yet verified in this environment:**
 
 - Live Bedrock calls against a real AWS account, because no AWS credentials were provided. The adapter, request/response translation, tool-use mapping, and image caching are unit-tested with a fake Bedrock Runtime client.
 - Live DeepSeek and MiniMax calls, because no API keys were provided. Those adapters remain available as fallbacks; the deterministic path is what the screenshots and browser demo exercise.
 - Actual Alexa+ console onboarding, because that requires hackathon toolkit credentials. The public HTTPS tunnel and exact discovery contract are now verified; only the console registration remains.
-- The GitHub Actions Docker workflow itself, because this directory is not a git repository. The equivalent Docker build, container health check, and MCP smoke test were run locally and passed.
 
 No real payments, inventory holds, or bookings are created. Prices, availability, and confirmations are simulated for the demo.
 

@@ -116,7 +116,7 @@ Quick-tunnel hostnames are ephemeral. The stable verification is the local Docke
 4. print container logs on failure
 5. always remove the container
 
-The workflow has not run because this directory is not a git repository. The equivalent local build, health check, and MCP smoke test passed.
+Both this Docker workflow and the Python lint/test workflow passed on the first push to the public repository. The equivalent local build, health check, and MCP smoke test also passed.
 
 See also: [AWS architecture blueprint](AWS_ARCHITECTURE_BLUEPRINT.md) · [Alexa+ integration guide](ALEXA_PLUS.md).
 

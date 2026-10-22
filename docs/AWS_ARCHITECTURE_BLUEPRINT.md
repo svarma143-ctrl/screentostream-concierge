@@ -300,9 +300,9 @@ make bedrock-check
 Container verification is also separate. On 2026-10-21 the image was built in
 a Lima ARM64 VM, the container reached `healthy`, and the full OAuth/MCP smoke
 test passed inside the container. `.github/workflows/docker-check.yml` repeats
-the build and `/api/health` check in GitHub Actions when the repository is
-pushed; the Actions workflow itself has not run because this directory is not
-yet a git repository.
+the build and `/api/health` check in GitHub Actions, and
+`.github/workflows/ci.yml` runs Ruff and pytest. Both workflows passed on the
+first push to the public repository.
 
 ### Verification log (2026-10-21)
 
