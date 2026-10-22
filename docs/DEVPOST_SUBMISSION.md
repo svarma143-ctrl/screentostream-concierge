@@ -11,6 +11,24 @@
 > Alexa+ project, not a separate additional open-source contribution. Only add
 > it if we create a distinct contribution and have its URL.
 
+## Challenge facts checked on 2026-10-21
+
+- The Alexa+ track accepts a **self-hosted MCP server** speaking MCP
+  **2025-11-25+** over **Streamable HTTP**, or an **Agent Skill**. A simulated
+  Alexa+ experience built with your own agentic tools is also allowed.
+- The Alexa+ resources link the open Agent Skills and Streamable HTTP docs. They
+  do **not** require Alexa+ Preview console access for the self-hosted path.
+- The **AWS Builder** mini challenge accepts documented AWS integrations. Our
+  integration is Amazon Bedrock Runtime through `boto3`.
+- The **Open Source** mini challenge requires a **new, additional** open-source
+  project or a contribution to a public repository during the hackathon window.
+  The primary repo alone is not being claimed under that mini challenge.
+- The challenge resources page says **AWS credit codes are exhausted as of
+  October 7, 2026**, and it is no longer accepting credit requests. Do not wait
+  for a challenge code; use AWS Free Tier or an existing account.
+- The demo video must be **under 3 minutes**, public on YouTube/Vimeo, in
+  English, and free of third-party music/trademarks.
+
 ---
 
 ## Project name
@@ -186,6 +204,8 @@ docker compose up --build
 ### Judge testing notes
 
 - No private credentials are required for the deterministic path.
+- The submission-path rationale, optional Alexa+ console steps, and evidence
+  checklist are in [`docs/ALEXA_PLUS_ONBOARDING.md`](ALEXA_PLUS_ONBOARDING.md).
 - The MCP endpoint is `http://127.0.0.1:8000/mcp`.
 - The OAuth client used by the simulator is `screentostream-simulator`.
 - The Alexa+ client ID is `alexa-plus-client`.
