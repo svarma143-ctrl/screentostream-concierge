@@ -1,7 +1,7 @@
 UV ?= uv
 PORT ?= 8000
 
-.PHONY: install env run dev test lint format-check format check smoke bedrock-check docker-build docker-up docker-down reset clean
+.PHONY: install env run dev test lint format-check format check smoke smoke-full bedrock-check docker-build docker-up docker-down reset clean
 
 install:
 	$(UV) sync --all-groups
@@ -33,6 +33,9 @@ check: lint format-check test
 
 smoke:
 	$(UV) run python scripts/smoke.py --base-url http://127.0.0.1:$(PORT)
+
+smoke-full:
+	$(UV) run python scripts/smoke.py --base-url http://127.0.0.1:$(PORT) --full
 
 bedrock-check:
 	$(UV) run python scripts/bedrock_check.py

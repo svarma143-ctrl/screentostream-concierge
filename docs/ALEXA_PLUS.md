@@ -4,6 +4,12 @@ This is the operator's guide to connecting ScreenToStream Concierge to Alexa+.
 
 The server is a Remote MCP server, self-hosted behind FastAPI, that speaks **MCP 2025-11-25 over Streamable HTTP** and protects `/mcp` with **OAuth 2.1 authorization code + PKCE S256**.
 
+> **Hackathon note:** the Alexa+ track requires a working self-hosted MCP server,
+> not Alexa+ Preview console access. The simulator is a real MCP client and is
+> the submitted path. Actual console onboarding is optional. See
+> [`ALEXA_PLUS_ONBOARDING.md`](ALEXA_PLUS_ONBOARDING.md) for the submission
+> checklist, judge test path, and the console steps if access becomes available.
+
 ---
 
 ## 1. What Alexa+ needs
@@ -57,9 +63,10 @@ Why restart? OAuth metadata is generated from settings at request time, and Fast
 
 ---
 
-## 3. Onboarding in Alexa+
+## 3. Optional: onboarding in Alexa+
 
-The toolkit UI changes, but the flow is:
+This section applies only if you have Alexa+ Preview console access. It is not
+required for the hackathon submission. The toolkit UI changes, but the flow is:
 
 1. Choose **add MCP server** / **link a remote MCP server**.
 2. Enter the MCP URL: `https://<your-host>/mcp`.

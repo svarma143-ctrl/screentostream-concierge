@@ -20,6 +20,11 @@ Official links:
 
 ## New-account credits
 
+> **Hackathon credit note (2026-10-21):** the challenge resources page says the
+> AWS credit codes are exhausted as of **October 7, 2026**, and it is no longer
+> accepting credit requests. Do not wait for a challenge code. Use the standard
+> AWS Free Tier offer below, or your own account.
+
 You do **not** need a promo code for the standard new-customer offer. AWS does
 not publish a public “Bedrock coupon code,” and codes sold or shared by
 third-party coupon sites are not trustworthy. Use the official programs:

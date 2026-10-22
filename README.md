@@ -6,6 +6,11 @@ Built for the **Alexa+ hackathon track**. Self-hosted, OAuth-protected, Streamab
 
 Also entered in the **AWS Builder Mini Challenge**: the reasoning and vision layers run through **Amazon Bedrock Runtime** via `boto3`, while the MCP contract stays unchanged.
 
+> **Hackathon submission:** the self-hosted MCP server is the required Alexa+
+> path; Alexa+ Preview console access is optional. See the
+> [Devpost submission draft](docs/DEVPOST_SUBMISSION.md) and
+> [Alexa+ onboarding prep](docs/ALEXA_PLUS_ONBOARDING.md).
+
 ![ScreenToStream Concierge simulator](docs/screenshots/simulator.jpg)
 
 ---
@@ -300,6 +305,7 @@ make test          # pytest, isolated temporary DB
 make lint          # ruff
 make format        # ruff format + fix
 make smoke         # protocol + OAuth + MCP client checks against :8000
+make smoke-full    # also writes a demo trip, quote, and booking
 ```
 
 The test suite is intentionally **not** a mock-only unit suite. It covers:
@@ -487,7 +493,7 @@ docs/              Alexa+ integration, AWS blueprint, friction log, feedback
 
 - Live Bedrock calls against a real AWS account, because no AWS credentials were provided. The adapter, request/response translation, tool-use mapping, and image caching are unit-tested with a fake Bedrock Runtime client.
 - Live DeepSeek and MiniMax calls, because no API keys were provided. Those adapters remain available as fallbacks; the deterministic path is what the screenshots and browser demo exercise.
-- Actual Alexa+ console onboarding, because that requires hackathon toolkit credentials. The public HTTPS tunnel and exact discovery contract are now verified; only the console registration remains.
+- Actual Alexa+ Preview console onboarding, because that requires toolkit/console access. It is **optional for this submission**: the Alexa+ track accepts a self-hosted MCP server, and the simulator is a real MCP client. The public HTTPS tunnel and exact discovery contract are verified. See [`docs/ALEXA_PLUS_ONBOARDING.md`](docs/ALEXA_PLUS_ONBOARDING.md).
 
 No real payments, inventory holds, or bookings are created. Prices, availability, and confirmations are simulated for the demo.
 
@@ -499,6 +505,9 @@ See [docs/PRODUCT_FEEDBACK.md](docs/PRODUCT_FEEDBACK.md) for what we learned bui
 
 For the submission-ready documents, see:
 
+- **[docs/DEVPOST_SUBMISSION.md](docs/DEVPOST_SUBMISSION.md)** — copy-paste Devpost fields, track/mini-challenge selection, product feedback, and final checklist.
+- **[docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)** — sub-3-minute shot list, recording checklist, and upload copy.
+- **[docs/ALEXA_PLUS_ONBOARDING.md](docs/ALEXA_PLUS_ONBOARDING.md)** — self-hosted submission path, judge test, optional Alexa+ console steps, and known limitations.
 - **[docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md)** — Alexa+, AWS, verification, and repository-hygiene checklist.
 - **[docs/AWS_ACCOUNT_SETUP.md](docs/AWS_ACCOUNT_SETUP.md)** — from-zero AWS account, IAM, Anthropic first-time-use, credential, and verification guide.
 - **[docs/AWS_ARCHITECTURE_BLUEPRINT.md](docs/AWS_ARCHITECTURE_BLUEPRINT.md)** — AWS architecture, request flows, security, fallback matrix, and test evidence.
