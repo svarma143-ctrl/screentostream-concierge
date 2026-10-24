@@ -1,5 +1,8 @@
 # ScreenToStream Concierge
 
+[![Python checks](https://github.com/svarma143-ctrl/screentostream-concierge/actions/workflows/ci.yml/badge.svg)](https://github.com/svarma143-ctrl/screentostream-concierge/actions/workflows/ci.yml)
+[![Docker build](https://github.com/svarma143-ctrl/screentostream-concierge/actions/workflows/docker-check.yml/badge.svg)](https://github.com/svarma143-ctrl/screentostream-concierge/actions/workflows/docker-check.yml)
+
 **An Alexa+ MCP server that turns the Fire TV moment you are watching into a real-world weekend — and a browser simulator that is an actual MCP client, not a mock.**
 
 Built for the **Alexa+ hackathon track**. Self-hosted, OAuth-protected, Streamable HTTP, and fast enough for a voice turn.
@@ -383,7 +386,7 @@ The compose file persists SQLite and uploaded frames in `./runtime`. Set `PUBLIC
 
 The image was built and exercised locally through a Lima ARM64 VM: the container reached `healthy`, and the full OAuth/MCP smoke test passed inside it. `hadolint Dockerfile` is also clean. See [docs/DOCKER_VERIFICATION.md](docs/DOCKER_VERIFICATION.md) for the commands and output.
 
-`.github/workflows/ci.yml` runs Ruff and pytest, and `.github/workflows/docker-check.yml` repeats the build and `/api/health` check. Both passed on the first push to [GitHub Actions](https://github.com/svarma143-ctrl/screentostream-concierge/actions).
+`.github/workflows/ci.yml` runs Ruff, the browser JavaScript syntax check, and pytest. `.github/workflows/docker-check.yml` repeats the image build and `/api/health` check. Both workflows run on every push and are green on the latest `main` commit in [GitHub Actions](https://github.com/svarma143-ctrl/screentostream-concierge/actions).
 
 ### Public tunnel
 
@@ -472,9 +475,9 @@ app/
   db.py            SQLite schema, seeding, helpers
   web/             simulator UI, styles, app.js, eight SVG scenes
 data/              curated destinations, stays, experiences, dining, scenes
-tests/             44 isolated protocol/planner/API/Bedrock/Phase 3–4 tests
+tests/             46 isolated protocol/planner/API/Bedrock/Phase 3–4 tests
 scripts/           smoke.py, bedrock_check.py, tunnel.sh
-.github/           Docker build + health-check CI workflow
+.github/           CI: Python checks + Docker build/health check
 docs/              Alexa+ integration, AWS blueprint + agentic loop, friction log, feedback
 ```
 
@@ -520,7 +523,7 @@ docs/              Alexa+ integration, AWS blueprint + agentic loop, friction lo
 - Plan → refine → quote → book → calendar
 - Frame upload through the fallback vision path
 - Scene switching, responsive layout, OAuth linking that survives reload/restart
-- 44 passing isolated tests, clean Ruff lint/format check, clean Hadolint check
+- 46 passing isolated tests, clean Ruff lint/format check, clean Hadolint check
 - Docker image built under Lima/ARM64; container health check and full MCP smoke test passed inside the container
 - Public Cloudflare quick tunnel verified with the full OAuth/MCP smoke test
 - Typed intent mapping, prompt bundles, persistent context chain, agent matrix route

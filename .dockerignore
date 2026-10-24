@@ -14,3 +14,8 @@ __pycache__
 .git
 .DS_Store
 *.log
+
+# Local-only submission assets and session exports.
+demo
+*.mp4
+alexa-mcp-server-hackathon-*.json

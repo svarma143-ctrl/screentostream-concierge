@@ -78,7 +78,7 @@ submission, **optional** = useful but not required.
 | Check | Status | Command or document |
 |---|---|---|
 | One-command judge demo | done | `make demo` → `http://127.0.0.1:8000`; no account, API key, or email |
-| Unit/integration suite | done | `make test` — **44 passed** |
+| Unit/integration suite | done | `make test` — **46 passed** |
 | Ruff lint | done | `make lint` |
 | Ruff formatting | done | `make format-check` |
 | Local OAuth/MCP smoke | done | `make smoke` |
