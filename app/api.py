@@ -402,7 +402,13 @@ async def analyze_frame(
         matched, confidence, reason = catalog.match_scene(show, position_seconds, analysis_text)
     else:
         confidence = float(analysis.get("confidence") or 0.8)
-        reason = "MiniMax multimodal scene match"
+        provider_name = str((analysis.get("_meta") or {}).get("provider") or "rules")
+        provider_label = {"bedrock": "Bedrock", "minimax": "MiniMax"}.get(provider_name)
+        reason = (
+            f"{provider_label} multimodal scene match"
+            if provider_label
+            else "Deterministic vision scene match"
+        )
 
     viewing = planner.record_viewing(
         "demo-user",

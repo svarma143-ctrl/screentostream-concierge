@@ -5,7 +5,7 @@ import base64
 import json
 from types import SimpleNamespace
 
-from app import aws_bedrock
+from app import aws_bedrock, simulator
 from app.aws_bedrock import Bedrock
 from app.config import Settings
 
@@ -40,9 +40,9 @@ def bedrock_settings(tmp_path, **overrides):
     values = {
         "bedrock_enabled": True,
         "bedrock_region": "us-east-1",
-        "bedrock_text_model_id": "anthropic.claude-3-5-sonnet-20241022-v2:0",
-        "bedrock_vision_model_id": "anthropic.claude-3-5-sonnet-20241022-v2:0",
-        "bedrock_image_model_id": "amazon.titan-image-generator-v1",
+        "bedrock_text_model_id": "global.anthropic.claude-sonnet-4-6",
+        "bedrock_vision_model_id": "global.anthropic.claude-sonnet-4-6",
+        "bedrock_image_model_id": "amazon.nova-canvas-v1:0",
         "bedrock_image_quality": "standard",
         "bedrock_image_width": 0,
         "bedrock_image_height": 0,
@@ -85,7 +85,7 @@ def test_bedrock_converse_text_parses_structured_intent(monkeypatch, tmp_path):
     assert data["_meta"]["provider"] == "bedrock"
     assert data["_meta"]["live"] is True
     call = fake.calls[0]
-    assert call["modelId"].startswith("anthropic.claude")
+    assert "anthropic.claude-sonnet-4-6" in call["modelId"]
     assert "system" in call
     assert call["messages"][0]["role"] == "user"
 
@@ -151,6 +151,88 @@ def test_bedrock_chat_maps_tools_and_tool_results(monkeypatch, tmp_path):
     assert any(
         block.get("toolResult", {}).get("toolUseId") == "tool-1"
         for block in call["messages"][-1]["content"]
+    )
+
+
+def test_bedrock_agent_loop_executes_mcp_tool_and_feeds_result_back(monkeypatch):
+    class FakeMCPClient:
+        def __init__(self):
+            self.tool_calls = []
+
+        async def list_tools(self):
+            return [
+                SimpleNamespace(
+                    name="get_viewing_context",
+                    description="Read the current scene.",
+                    input_schema={"type": "object", "properties": {}},
+                )
+            ]
+
+        async def call_tool(self, name, arguments):
+            self.tool_calls.append((name, arguments))
+            return SimpleNamespace(
+                structured_content={
+                    "status": "ready",
+                    "has_live_context": True,
+                    "speech": "You're watching Kyoto After Dark.",
+                    "scene": {
+                        "show": "Kyoto After Dark",
+                        "scene_title": "Pontocho Alley",
+                        "destination": {"name": "Kyoto"},
+                        "dish": "Yudofu",
+                    },
+                },
+                content=[],
+                is_error=False,
+            )
+
+    class FakeReasoner:
+        def __init__(self):
+            self.calls = []
+
+        async def chat(self, messages, *, tools=None, operation=""):
+            self.calls.append({"messages": messages, "tools": tools, "operation": operation})
+            if len(self.calls) == 1:
+                return {
+                    "content": "I'll check the scene.",
+                    "tool_calls": [
+                        {
+                            "id": "tool-1",
+                            "name": "get_viewing_context",
+                            "arguments": "{}",
+                        }
+                    ],
+                }
+            return {
+                "content": "You're watching Kyoto After Dark in Pontocho Alley.",
+                "tool_calls": [],
+            }
+
+    async def fake_parse_intent(*args, **kwargs):
+        return {"intent": "orient"}
+
+    client = FakeMCPClient()
+    reasoner = FakeReasoner()
+    monkeypatch.setattr(simulator, "get_reasoner", lambda: reasoner)
+    monkeypatch.setattr(simulator.planner, "get_viewing", lambda user_id: None)
+    monkeypatch.setattr(simulator.planner, "get_preferences", lambda user_id: {})
+    monkeypatch.setattr(simulator.planner, "parse_intent", fake_parse_intent)
+    monkeypatch.setattr(simulator.agent_context, "structured_context", lambda *args, **kwargs: [])
+
+    session = simulator.SimulatorSession(id="agent-loop-test")
+    runner = simulator._SessionRunner(client, session, "What's on TV?")
+
+    reply = asyncio.run(runner.run_agent())
+
+    assert reply == "You're watching Kyoto After Dark in Pontocho Alley."
+    assert client.tool_calls == [("get_viewing_context", {})]
+    assert runner.trace[0]["name"] == "get_viewing_context"
+    assert len(reasoner.calls) == 2
+    assert reasoner.calls[0]["tools"][0]["function"]["name"] == "get_viewing_context"
+    second_messages = reasoner.calls[1]["messages"]
+    assert any(
+        message.get("role") == "tool" and message.get("tool_call_id") == "tool-1"
+        for message in second_messages
     )
 
 
@@ -237,8 +319,8 @@ def test_provider_status_and_factory_prefer_bedrock(monkeypatch):
     assert status["reasoner"] == "bedrock"
     assert status["vision"] == "bedrock"
     assert status["simulator_agent"] == "bedrock"
-    assert providers.get_deepseek() is fake
-    assert providers.get_minimax() is fake
+    assert providers.get_reasoner() is fake
+    assert providers.get_vision() is fake
 
 
 def test_bedrock_mode_controls_provider_activation():

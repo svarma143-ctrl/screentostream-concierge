@@ -4,7 +4,7 @@
 
 Built for the **Alexa+ hackathon track**. Self-hosted, OAuth-protected, Streamable HTTP, and fast enough for a voice turn.
 
-Also entered in the **AWS Builder Mini Challenge**: the reasoning and vision layers run through **Amazon Bedrock Runtime** via `boto3`, while the MCP contract stays unchanged.
+Also entered in the **AWS Builder Mini Challenge**: reasoning, vision, and an agentic Converse tool loop run through **Amazon Bedrock Runtime** via `boto3`, while the MCP contract stays unchanged. A separate [**Video-to-Geospatial Timeline Schema**](https://github.com/svarma143-ctrl/screentostream-video-timeline) repository supports the Open Source mini challenge.
 
 > **Hackathon submission:** the self-hosted MCP server is the required Alexa+
 > path; Alexa+ Preview console access is optional. See the
@@ -12,6 +12,11 @@ Also entered in the **AWS Builder Mini Challenge**: the reasoning and vision lay
 > [Alexa+ onboarding prep](docs/ALEXA_PLUS_ONBOARDING.md).
 
 ![ScreenToStream Concierge simulator](docs/screenshots/simulator.jpg)
+
+> **Judge in 60 seconds:** `make demo` → open `http://127.0.0.1:8000` → click
+> **Play the scene** → ask “cheaper, more food-focused” → **Quote it** →
+> **Book it** → **Send to TV**. No account, API key, or email is required. The
+> OAuth **Link account** button is optional and demonstrates the real PKCE flow.
 
 ---
 
@@ -28,14 +33,28 @@ If the TV is off, the same server switches to **standalone concierge mode** and 
 This repository contains both halves:
 
 - **The MCP server** that Alexa+ connects to: FastAPI + FastMCP, Streamable HTTP at `/mcp`, OAuth 2.1 authorization code with PKCE S256, SQLite persistence, 14 tools.
-- **The simulator** at `/`: a Fire TV pane, an Echo Show conversation, a live MCP tool trace, an OAuth linking flow, SSE-driven TV cards, frame upload, voice output, and eight switchable viewing moments. It authenticates with a real Bearer token and speaks to the real `/mcp` endpoint.
-- **The logic and synthesis layers**: a typed `TravelIntent` schema, reusable structured prompts, a persistent context chain, and an AWS Bedrock-first provider layer for text, vision, and itinerary-card art. DeepSeek/MiniMax remain supported, and the deterministic catalog/rules path is always available.
+- **The simulator** at `/`: a simulated Fire TV pane, a simulated Echo Show conversation, a live MCP tool trace, an OAuth linking flow, SSE-driven TV cards, frame upload, voice output, and eight switchable viewing moments. It authenticates with a real Bearer token and speaks to the real `/mcp` endpoint. This is a browser simulator, not a Fire TV app.
+- **The logic and synthesis layers**: a typed `TravelIntent` schema, reusable structured prompts, a persistent context chain, and an AWS Bedrock-first provider layer for text, vision, and itinerary-card art. The DeepSeek and MiniMax adapters remain available as optional fallbacks, and the deterministic catalog/rules path is always available.
 
 ---
 
 ## Try it in two minutes
 
-Requirements: Python 3.12+, [`uv`](https://docs.astral.sh/uv/), no API keys needed.
+Requirements: Python 3.12+ and [`uv`](https://docs.astral.sh/uv/). **No account,
+API key, or email is required.**
+
+Fastest judge path — one command:
+
+```bash
+make demo
+```
+
+Open **http://127.0.0.1:8000** and click **Play the scene**. The OAuth
+**Link account** button is optional; it demonstrates the real PKCE consent flow
+with the seeded `demo-user` account, but the product flow already works without
+it.
+
+Manual path:
 
 ```bash
 cp .env.example .env
@@ -43,14 +62,12 @@ uv sync --all-groups
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Open **http://127.0.0.1:8000**.
-
-Or use the Makefile:
+Or use the Makefile for reload mode:
 
 ```bash
 make env
 make install
-make dev        # reload mode
+make dev
 ```
 
 Click **Play the scene**, then try:
@@ -66,11 +83,11 @@ Watch the **MCP tool trace** on the right. The TV overlay receives `send_to_tv` 
 
 | Surface | What it proves |
 |---|---|
-| **Link account** | Real browser OAuth: consent page → authorization code → PKCE token exchange → Bearer token → `Linked · Ava` |
-| **Play the scene** | Deterministic agent routes the same 14 MCP tools as the live DeepSeek loop |
+| **Play the scene** | Starts the full product flow with no account or key. The deterministic agent routes the same 14 MCP tools as the live model loop. |
+| **Link account** (optional) | Real browser OAuth: consent page → authorization code → PKCE token exchange → Bearer token → `Linked · Ava` |
 | **Tool trace** | Every call is a real Streamable HTTP request to `/mcp`, with arguments and per-call latency |
 | **Fire TV overlay** | `send_to_tv` publishes an SSE event that the TV pane renders immediately |
-| **Analyze a frame** | MiniMax vision when configured; deterministic scene matcher when not |
+| **Analyze a frame** | Vision provider (Bedrock or MiniMax) when configured; deterministic scene matcher when not |
 | **Scene strip** | Eight original illustrated moments: Kyoto, Lisbon, Copenhagen, Oaxaca, Seoul, Amalfi, Marrakech, Vancouver |
 | **Docs** | `/docs/alexa-plus` is the in-app integration cheat sheet |
 
@@ -94,8 +111,26 @@ Most “MCP demos” wrap a chat endpoint in a fake REST route. This one impleme
 - **Protected Resource Metadata (RFC 9728)** and **Authorization Server Metadata**.
 - **Bare `401` with no `WWW-Authenticate` header** on unauthenticated `/mcp`, because that is the current Alexa+ requirement. (FastAPI's `HTTPBearer` injects the header, so the server implements bearer enforcement explicitly.)
 - **Single-use, hashed authorization codes**, redirect-URI checking, refresh-token rotation and revocation.
-- **Sub-500 ms hot path** by keeping catalog, pricing, and quotes deterministic and writing DeepSeek narrative in the background with speculative plan caching.
+- **Sub-500 ms hot path** by keeping catalog, pricing, and quotes deterministic and writing reasoning-provider narrative in the background with speculative plan caching.
 
+## Relationship to Alexa+ native travel planning
+
+Alexa+ already plans trips and is adding travel-booking partners such as
+Expedia and eDreams ODIGEO. Those are general-purpose travel agents, and this
+project does not try to replace them.
+
+ScreenToStream is deliberately narrower: it is a reference **Alexa+ MCP
+add-on** that turns the current Fire TV moment into a structured, deterministic,
+bookable flow, then pushes the result back to the TV. The differentiators are
+the context-to-transaction bridge, the OAuth-protected MCP contract, and the
+inspectable quote/booking state machine — not a proprietary travel inventory.
+The catalog and bookings are simulated for the hackathon.
+
+This is also not a classic skill in the Alexa Skills store. It is a self-hosted
+MCP server designed to be onboarded as an Alexa+ MCP add-on, which is the path
+the Alexa+ track is asking builders to demonstrate.
+
+See Amazon's [Alexa+ Travel Planning help](https://www.amazon.com/gp/help/customer/display.html?nodeId=TnoUUverxu5bfPUs7l) and the [Alexa+ MCP Toolkit overview](https://developer.amazon.com/docs/alexaplus/add-ons/mcp-toolkit-overview.html).
 
 ## AWS Builder Mini-Challenge integration
 
@@ -103,11 +138,13 @@ Most “MCP demos” wrap a chat endpoint in a fake REST route. This one impleme
 
 | Layer | Bedrock implementation |
 |---|---|
-| Reasoning / intent | Claude 3.5 Sonnet via the Bedrock **Converse API**, using the same structured `TravelIntent` prompts |
-| Simulator tool loop | Bedrock Converse tool-use blocks, translated to/from the existing MCP tool loop |
+| Reasoning / intent | Claude Sonnet 4.6 via the Bedrock **Converse API**, using the same structured `TravelIntent` prompts |
+| Agentic tool loop | Bedrock Converse `toolUse` blocks; the model chooses one of the 14 MCP tools, the simulator executes it through `/mcp`, and the `toolResult` is fed back for up to six rounds |
 | Frame understanding | Claude multimodal image blocks from the Fire TV frame data URL |
 | Itinerary-card copy | Bedrock Converse with the existing card-synthesis schema |
-| Destination art | Amazon Titan Image Generator (or Nova Canvas) via `InvokeModel`, cached under `/media/generated` |
+| Destination art | Amazon Nova Canvas (or Titan Image Generator) via `InvokeModel`, cached under `/media/generated` |
+
+**Agentic loop:** The AWS path is not a single prompt. Bedrock decides which MCP tool to call; `app/simulator.py` executes that call against the real OAuth-protected `/mcp` endpoint; `app/aws_bedrock.py` translates the result back into Converse `toolResult` blocks; and the loop continues until the model answers. The adapter test exercises that round trip without AWS credentials. See **[docs/AWS_AGENTIC_LOOP.md](docs/AWS_AGENTIC_LOOP.md)**.
 
 **Integration strategy:** inbound MCP requests still hit the flat root **`/mcp`** Streamable HTTP endpoint. The provider adapter selects Bedrock when `BEDROCK_MODE=live` (or auto-detects standard AWS credential markers or a short-term Bedrock API key), then maps the existing prompts and tool schemas onto Bedrock Runtime calls. There is deliberately no custom `/mcp/tools/execute` route: that would bypass JSON-RPC, `initialize`, session handling, and OAuth.
 
@@ -115,7 +152,7 @@ From-zero account setup: **[docs/AWS_ACCOUNT_SETUP.md](docs/AWS_ACCOUNT_SETUP.md
 Full Bedrock setup, IAM policy, and model-ID notes: **[docs/AWS_BEDROCK.md](docs/AWS_BEDROCK.md)**.  
 Submission status and remaining manual gates: **[docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md)**.  
 Live readiness check: `make bedrock-check` (one real Converse call; it fails explicitly if credentials or model access are missing).  
-Submission documents: **[AWS architectural blueprint](docs/AWS_ARCHITECTURE_BLUEPRINT.md)** and **[open source friction log](docs/FRICTION_LOG.md)**.
+Submission documents: **[AWS architectural blueprint](docs/AWS_ARCHITECTURE_BLUEPRINT.md)**, **[guided friction log](docs/FRICTION_LOG_V2.md)**, and **[detailed engineering log](docs/FRICTION_LOG.md)**.
 
 ---
 
@@ -134,7 +171,7 @@ Fire TV frame / scene
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │ FastMCP · Streamable HTTP · /mcp                      │  │
 │  │  14 tools → planner / catalog / SQLite                │  │
-│  │  provider adapters → Bedrock / DeepSeek / rules       │  │
+│  │  provider adapters → Bedrock / fallbacks / rules       │  │
 │  │  intents · prompts · context chain · visual synthesis │  │
 │  └───────────────────────────────────────────────────────┘  │
 └───────────────▲───────────────────────────────┬─────────────┘
@@ -144,7 +181,7 @@ Fire TV frame / scene
      │ Browser simulator   │          │ Fire TV overlay      │
      │ real MCP client     │          │ /api/events/stream   │
      │ typed intent +      │          └──────────────────────┘
-     │ Bedrock/DeepSeek    │
+     │ Reasoning provider  │
      │ tool loop or rules  │
      └─────────────────────┘
 
@@ -156,7 +193,7 @@ Alexa+ ── OAuth 2.1 PKCE ──▶ Bearer ──▶ /mcp ──▶ tools
 1. A Fire TV scene is recorded in `viewing_sessions` (show, episode, timestamp, destination, dish, optional frame).
 2. `get_viewing_context` gives the agent a compact scene card.
 3. `plan_trip` resolves dates (“next spring”), budget, guests, style, and dietary constraints, then selects a stay, experiences, and dinners from the curated catalog.
-4. Pricing and the itinerary are deterministic and cached under a plan key. If DeepSeek is live, narrative refinement happens in the background; the first call can return `status="planning"` with a `trip_id`, and `get_trip` polls it.
+4. Pricing and the itinerary are deterministic and cached under a plan key. If a reasoning provider is live, narrative refinement happens in the background; the first call can return `status="planning"` with a `trip_id`, and `get_trip` polls it.
 5. `quote_trip` creates a 15-minute held quote with line items, taxes, and a concierge fee.
 6. `book_trip` requires an explicit `confirm=true` and is idempotent. It creates a simulated confirmation with a booking ID and an `.ics` calendar export.
 7. `send_to_tv` publishes an SSE card back to the Fire TV pane.
@@ -166,16 +203,16 @@ Alexa+ ── OAuth 2.1 PKCE ──▶ Bearer ──▶ /mcp ──▶ tools
 The model boundary is typed and observable:
 
 - **`app/intents.py`** defines `TravelIntent`, the canonical actions (`plan_trip`, `refine_trip`, `quote_trip`, `book`, `ask_dish`, `remember`, `send_to_tv`, `stay_details`, `other`), aliases from loose model tokens, and a machine-readable schema. It also exposes the agent matrix: which actions are supported in rules/live mode, which tools they call, and which scope they require.
-- **`app/prompts.py`** builds every DeepSeek/MiniMax prompt as a `PromptBundle` (system, user, token budget, temperature, response schema). The intent parser receives the schema, current scene, and context chain instead of a hand-written string.
-- **`app/agent_context.py`** persists compact user/assistant turns, the validated intent, and the tool trace in `agent_sessions` / `agent_turns`. The DeepSeek simulator prompt is rebuilt from this chain after a reload or server restart.
+- **`app/prompts.py`** builds every reasoning/vision prompt as a `PromptBundle` (system, user, token budget, temperature, response schema). The intent parser receives the schema, current scene, and context chain instead of a hand-written string.
+- **`app/agent_context.py`** persists compact user/assistant turns, the validated intent, and the tool trace in `agent_sessions` / `agent_turns`. The simulator prompt is rebuilt from this chain after a reload or server restart.
 - **`planner._normalise_intent`** is now a thin validation boundary: provider JSON → `TravelIntent` → planner fields. Dates, destination, budget, party size, style, dietary constraints, and scene references are all normalized in one place.
 
 Inspect it live with `GET /api/simulator/matrix` and preview any sentence with `POST /api/simulator/intent`.
 
 ### The synthesis processor (Phase 4)
 
-- **Frame ingest** reads PNG/JPEG/WebP/GIF headers without Pillow, records format, dimensions, orientation, and aspect ratio, and passes that metadata into the MiniMax vision prompt.
-- **`app/synthesis.py`** always produces a deterministic visual card (palette, eyebrow, chapter captions, why-this note, hero). When MiniMax is configured it asks the model for the editorial card layer and generates a 16:9 hero image, caches it under `/media/generated`, and publishes `trip_card_ready` so the simulator can swap the polished card in place.
+- **Frame ingest** reads PNG/JPEG/WebP/GIF headers without Pillow, records format, dimensions, orientation, and aspect ratio, and passes that metadata into the vision-provider prompt.
+- **`app/synthesis.py`** always produces a deterministic visual card (palette, eyebrow, chapter captions, why-this note, hero). When a vision provider is configured it asks the model for the editorial card layer and generates a 16:9 hero image, caches it under `/media/generated`, and publishes `trip_card_ready` so the simulator can swap the polished card in place.
 - **The hot path never waits for art.** The base plan is stored and served immediately; visual polish is a background task. If the provider is unavailable, the deterministic card is already present.
 
 ### Data
@@ -266,17 +303,17 @@ Copy `.env.example` to `.env`. The important settings:
 | `INTERNAL_MCP_URL` | `http://127.0.0.1:8000/mcp` | How the simulator reaches MCP. In Docker, keep this at `http://127.0.0.1:8000/mcp` inside the container. |
 | `SECRET_KEY` | generated file | Locally stored in `runtime/dev-secret.key` so tokens survive restarts. Set a real secret in production. |
 | `DATABASE_PATH` | `runtime/concierge.db` | SQLite file. |
-| `BEDROCK_MODE` | `auto` | `auto` uses Bedrock when standard AWS credential markers or a short-term Bedrock API key are present; `live` forces it; `off` uses DeepSeek/MiniMax. |
+| `BEDROCK_MODE` | `auto` | `auto` uses Bedrock when standard AWS credential markers or a short-term Bedrock API key are present; `live` forces it; `off` disables Bedrock and uses the optional fallback adapters when configured. |
 | `AWS_REGION` | `us-east-1` | Bedrock region. `AWS_DEFAULT_REGION` is also honored. |
 | `AWS_BEARER_TOKEN_BEDROCK` | empty | Optional short-term Bedrock API key. Leave empty to use the standard AWS credential chain. Never commit it. |
-| `BEDROCK_TEXT_MODEL_ID` | `anthropic.claude-3-5-sonnet-20241022-v2:0` | Reasoning, intent, narrative, and simulator tool loop. Use the exact model or inference-profile ID enabled in your account. |
+| `BEDROCK_TEXT_MODEL_ID` | `global.anthropic.claude-sonnet-4-6` | Reasoning, intent, narrative, and the agentic tool loop. Use the exact model or inference-profile ID enabled in your account. |
 | `BEDROCK_VISION_MODEL_ID` | same | Multimodal frame analysis. |
-| `BEDROCK_IMAGE_MODEL_ID` | `amazon.titan-image-generator-v1` | Itinerary hero art. Set to `amazon.nova-canvas-v1:0` for native 16:9. |
-| `DEEPSEEK_API_KEY` | empty | Optional fallback when Bedrock is disabled. Enables the DeepSeek tool loop, intent parsing, refinement, and narrative. |
+| `BEDROCK_IMAGE_MODEL_ID` | `amazon.nova-canvas-v1:0` | Itinerary hero art at native 16:9. Titan v1 remains supported. |
+| `DEEPSEEK_API_KEY` | empty | Optional fallback when Bedrock is disabled. Enables the DeepSeek adapter for the tool loop, intent parsing, refinement, and narrative. |
 | `DEEPSEEK_MODEL` | `deepseek-flash` | Override for your account's available model. |
-| `MINIMAX_API_KEY` | empty | Optional fallback when Bedrock is disabled. Enables MiniMax vision, culinary writing, and image generation. |
+| `MINIMAX_API_KEY` | empty | Optional fallback when Bedrock is disabled. Enables the MiniMax adapter for vision, culinary writing, and image generation. |
 | `MINIMAX_MODEL`, `MINIMAX_VISION_MODEL` | `MiniMax-M3.1-Flash` | Override for your account. |
-| `SIMULATOR_AGENT` | `auto` | `auto` uses Bedrock when enabled, then DeepSeek, otherwise the deterministic rules router. `rules` forces offline. |
+| `SIMULATOR_AGENT` | `auto` | `auto` uses Bedrock when enabled, then the fallback adapters, otherwise the deterministic rules router. `rules` forces offline. |
 | `PLANNER_WAIT_MS` | `400` | How long the MCP hot path waits for a background narrative before returning `planning`. |
 | `ALEXA_CLIENT_ID` | `alexa-plus-client` | Provisioned OAuth client for Alexa+. |
 | `ALEXA_REDIRECT_URIS` | empty | Comma-separated redirect URIs supplied by the Alexa+ toolkit. The public `/auth/callback` and localhost variants are included automatically. |
@@ -287,8 +324,10 @@ Copy `.env.example` to `.env`. The important settings:
 Provider selection is deliberate and observable:
 
 1. **Amazon Bedrock** (preferred when enabled) — Converse API for structured intent, narrative, refinement, frame understanding, and the simulator tool loop; InvokeModel for generated hero art.
-2. **DeepSeek / MiniMax** (optional fallback) — OpenAI-compatible adapters for teams that set `BEDROCK_MODE=off` or do not use AWS.
+2. **DeepSeek / MiniMax adapters** (optional fallback) — OpenAI-compatible adapters for teams that set `BEDROCK_MODE=off` or do not use AWS.
 3. **Deterministic rules** — the same catalog, planner, pricing, and MCP tools, with no external call. This is why the demo keeps working when a credential is missing or a provider is slow.
+
+**Terminology:** “reasoning provider” means Amazon Bedrock or the optional DeepSeek adapter; “vision provider” means Amazon Bedrock or the optional MiniMax adapter. DeepSeek and MiniMax are named explicitly only when referring to those fallback adapters, not to the live path in the submitted demo.
 
 Provider calls are logged to the `usage` table and surfaced at `/api/usage`; `/api/simulator/status` reports the effective reasoner and vision provider. See [docs/AWS_BEDROCK.md](docs/AWS_BEDROCK.md) for IAM and model setup.
 
@@ -392,7 +431,7 @@ If the toolkit supplies a specific redirect URI and client ID, do not guess: reg
 The <500 ms target applies to the MCP hot path, not to an LLM writing prose. The architecture keeps them separate:
 
 - Catalog lookup, date resolution, pricing, quote math, and SQLite reads are local and deterministic.
-- `plan_trip` can return a complete plan immediately. With DeepSeek live, narrative polish runs in the background and a cached plan is served on the next poll.
+- `plan_trip` can return a complete plan immediately. With a reasoning provider live, narrative polish runs in the background and a cached plan is served on the next poll.
 - Scene events speculatively pre-warm the likely “weekend here next spring” plan.
 - The simulator agent can use the deterministic rules router, which exercises the same tools with no model latency.
 - Each tool response includes timing in the UI trace; `/api/health` exposes the protocol floor.
@@ -408,7 +447,7 @@ Representative local results (Apple silicon, local uvicorn + SQLite, mock provid
 | `quote_trip` | ~1–3 ms |
 | `book_trip` | ~1–4 ms |
 
-Run `make smoke` and watch the trace for current numbers on your machine. Live Bedrock/DeepSeek/MiniMax calls add provider latency, which is why the voice path never blocks on narrative.
+Run `make smoke` and watch the trace for current numbers on your machine. Live provider calls add latency, which is why the voice path never blocks on narrative.
 
 ---
 
@@ -426,17 +465,17 @@ app/
   synthesis.py     deterministic + Bedrock/MiniMax visual itinerary cards
   media.py         frame format/dimension/aspect-ratio inspection
   providers.py     provider factory + DeepSeek/MiniMax adapters
-  aws_bedrock.py   Bedrock Runtime adapter: Converse, vision, Titan/Nova art
-  simulator.py     real MCP client, Bedrock/DeepSeek tool loop, rules router
+  aws_bedrock.py   Bedrock Runtime adapter: Converse, vision, Nova/Titan art
+  simulator.py     real MCP client, model-directed agent loop, rules router
   catalog.py       destinations, scenes, dates, search, budget parsing
   api.py           demo/viewing/simulator/SSE/calendar/health endpoints
   db.py            SQLite schema, seeding, helpers
   web/             simulator UI, styles, app.js, eight SVG scenes
 data/              curated destinations, stays, experiences, dining, scenes
-tests/             43 isolated protocol/planner/API/Bedrock/Phase 3–4 tests
+tests/             44 isolated protocol/planner/API/Bedrock/Phase 3–4 tests
 scripts/           smoke.py, bedrock_check.py, tunnel.sh
 .github/           Docker build + health-check CI workflow
-docs/              Alexa+ integration, AWS blueprint, friction log, feedback
+docs/              Alexa+ integration, AWS blueprint + agentic loop, friction log, feedback
 ```
 
 ---
@@ -481,17 +520,18 @@ docs/              Alexa+ integration, AWS blueprint, friction log, feedback
 - Plan → refine → quote → book → calendar
 - Frame upload through the fallback vision path
 - Scene switching, responsive layout, OAuth linking that survives reload/restart
-- 43 passing isolated tests, clean Ruff lint/format check, clean Hadolint check
+- 44 passing isolated tests, clean Ruff lint/format check, clean Hadolint check
 - Docker image built under Lima/ARM64; container health check and full MCP smoke test passed inside the container
 - Public Cloudflare quick tunnel verified with the full OAuth/MCP smoke test
 - Typed intent mapping, prompt bundles, persistent context chain, agent matrix route
 - Frame image metadata, deterministic visual cards, and the Bedrock/MiniMax card adapter
-- Amazon Bedrock Runtime adapter (Converse, multimodal frame blocks, Titan/Nova image generation) with mocked-runtime tests
+- Amazon Bedrock Runtime adapter (Converse, multimodal frame blocks, Nova/Titan image generation) with mocked-runtime tests
+- A loop-level test that executes a model-selected MCP tool and feeds the result into the next Converse turn
 - `make bedrock-check` live readiness gate; GitHub Actions Python and Docker workflows passed on the first push
 
 **Not yet verified in this environment:**
 
-- Live Bedrock calls against a real AWS account, because no AWS credentials were provided. The adapter, request/response translation, tool-use mapping, and image caching are unit-tested with a fake Bedrock Runtime client.
+- Live Bedrock calls against a real AWS account, because no AWS credentials were provided. The adapter, request/response translation, tool-use mapping, loop orchestration, and image caching are unit-tested with a fake Bedrock Runtime client.
 - Live DeepSeek and MiniMax calls, because no API keys were provided. Those adapters remain available as fallbacks; the deterministic path is what the screenshots and browser demo exercise.
 - Actual Alexa+ Preview console onboarding, because that requires toolkit/console access. It is **optional for this submission**: the Alexa+ track accepts a self-hosted MCP server, and the simulator is a real MCP client. The public HTTPS tunnel and exact discovery contract are verified. See [`docs/ALEXA_PLUS_ONBOARDING.md`](docs/ALEXA_PLUS_ONBOARDING.md).
 
@@ -506,12 +546,14 @@ See [docs/PRODUCT_FEEDBACK.md](docs/PRODUCT_FEEDBACK.md) for what we learned bui
 For the submission-ready documents, see:
 
 - **[docs/DEVPOST_SUBMISSION.md](docs/DEVPOST_SUBMISSION.md)** — copy-paste Devpost fields, track/mini-challenge selection, product feedback, and final checklist.
+- **[Video-to-Geospatial Timeline Schema](https://github.com/svarma143-ctrl/screentostream-video-timeline)** — standalone JSON Schema 2020-12 companion and Open Source mini-challenge entry, with examples, validator, tests, and CI.
 - **[docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)** — sub-3-minute shot list, recording checklist, and upload copy.
 - **[docs/ALEXA_PLUS_ONBOARDING.md](docs/ALEXA_PLUS_ONBOARDING.md)** — self-hosted submission path, judge test, optional Alexa+ console steps, and known limitations.
 - **[docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md)** — Alexa+, AWS, verification, and repository-hygiene checklist.
 - **[docs/AWS_ACCOUNT_SETUP.md](docs/AWS_ACCOUNT_SETUP.md)** — from-zero AWS account, IAM, Anthropic first-time-use, credential, and verification guide.
 - **[docs/AWS_ARCHITECTURE_BLUEPRINT.md](docs/AWS_ARCHITECTURE_BLUEPRINT.md)** — AWS architecture, request flows, security, fallback matrix, and test evidence.
-- **[docs/FRICTION_LOG.md](docs/FRICTION_LOG.md)** — open-source friction log covering OAuth, protocol negotiation, Bedrock model access, `boto3`, Converse tool use, and credential-free testing.
+- **[docs/FRICTION_LOG_V2.md](docs/FRICTION_LOG_V2.md)** — guided friction log with BLUF and grade, persona, scoped checklist, pros/cons, severity-ranked findings, questions, recommendations, test environment, and success/failure evidence.
+- **[docs/FRICTION_LOG.md](docs/FRICTION_LOG.md)** — detailed engineering log with the full F-01 through F-13 write-ups.
 
 ## License
 

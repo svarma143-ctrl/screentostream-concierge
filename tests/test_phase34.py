@@ -47,6 +47,20 @@ def test_travel_intent_maps_provider_tokens_into_typed_schema():
     assert data["start_date"] == "2027-04-09"
 
 
+def test_travel_intent_preserves_bedrock_provider_metadata():
+    intent = TravelIntent.from_raw(
+        {"intent": "plan_trip", "destination": "Kyoto"},
+        "Plan a weekend in Kyoto.",
+        source="bedrock",
+        model="global.anthropic.claude-sonnet-4-6",
+    )
+    data = intent.to_dict()
+    assert data["source"] == "bedrock"
+    assert data["model"] == "global.anthropic.claude-sonnet-4-6"
+    assert data["_meta"]["provider"] == "bedrock"
+    assert data["_meta"]["live"] is True
+
+
 def test_travel_intent_keeps_scene_context_for_here_requests():
     intent = TravelIntent.from_raw(
         {"intent": "book_trip", "confidence": 0.86},
@@ -165,6 +179,8 @@ def test_minimax_card_synthesis_merges_patch_and_hero(monkeypatch):
     from app import synthesis
 
     class FakeMiniMax:
+        provider = "minimax"
+
         async def synthesize_itinerary_card(self, plan):
             return {
                 "eyebrow": "Kyoto · spring",
@@ -212,6 +228,8 @@ def test_context_and_matrix_routes_are_available(client):
     assert matrix.status_code == 200
     body = matrix.json()
     assert len(body["actions"]) == len(agent_matrix()["actions"])
+    assert "bedrock" in body["modes"]
+    assert all("bedrock" in action["modes"] for action in body["actions"])
     assert any(route["path"] == "/api/simulator/intent" for route in body["control_routes"])
 
     preview = client.post(

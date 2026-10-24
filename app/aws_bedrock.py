@@ -1,17 +1,16 @@
 """Amazon Bedrock adapter for the concierge's reasoning and vision layers.
 
 This module is deliberately a drop-in provider implementation. The planner,
-simulator, frame analyzer, and card synthesizer continue to call the same
-methods they used for DeepSeek and MiniMax; the provider factory in
-``app.providers`` selects Bedrock when it is enabled.
+simulator, frame analyzer, and card synthesizer call the same provider methods;
+the provider factory in ``app.providers`` selects Bedrock when it is enabled.
 
 Configuration is environment-driven:
 
 * ``BEDROCK_MODE=auto|live|off`` (default ``auto``)
 * standard AWS credential chain (env vars, shared profile, task/instance role)
 * ``AWS_REGION`` or ``AWS_DEFAULT_REGION``
-* ``BEDROCK_TEXT_MODEL_ID`` (Claude 3.5 Sonnet by default)
-* ``BEDROCK_IMAGE_MODEL_ID`` (Titan Image Generator by default)
+* ``BEDROCK_TEXT_MODEL_ID`` (Claude Sonnet 4.6 global profile by default)
+* ``BEDROCK_IMAGE_MODEL_ID`` (Nova Canvas by default; Titan v1 also supported)
 
 The adapter uses the Bedrock Runtime Converse API for text and image input,
 and InvokeModel for image generation. All synchronous boto3 calls are moved
@@ -278,6 +277,13 @@ class Bedrock:
         tools: list[dict[str, Any]] | None = None,
         operation: str = "agent",
     ) -> dict[str, Any]:
+        """One Converse turn in a multi-round, model-directed tool-use loop.
+
+        The adapter returns any ``toolUse`` blocks as generic ``tool_calls``.
+        The simulator executes those calls against the real MCP endpoint and
+        appends ``toolResult`` blocks before the next Converse turn.
+        """
+
         converted, system = self._convert_chat_messages(messages)
         response, started = await self._converse(
             operation=operation,

@@ -3,15 +3,22 @@
 **Challenge:** Build, Ship, Shape: Amazon Developer Hackathon  
 **Deadline:** **October 23, 2026, 12:00 PM PDT**  
 **Primary track:** Alexa+  
-**Mini challenge:** AWS Builder  
+**Mini challenges:** AWS Builder; Open Source (separate schema repository)<br>
 **Repository:** <https://github.com/svarma143-ctrl/screentostream-concierge>  
-**Demo video:** _TBD — add the public YouTube/Vimeo URL before submitting_
+**Local demo renders:** `demo/screentostream-concierge-demo-andrew-agentic.mp4`
+(Andrew voice, updated agentic AWS segment) — **1:28**, 1080p, English neural
+voiceover, soft captions. Preserved alternates:
+`demo/screentostream-concierge-demo.mp4` (Ava voice) and
+`demo/screentostream-concierge-demo-andrew.mp4` (Andrew voice, previous AWS
+segment).<br>
+**Public video URL:** _TBD — upload the updated Andrew render to YouTube/Vimeo before submitting_
 
-> **Open Source mini challenge:** not claimed. This repository is the primary
-> Alexa+ project, not a separate additional open-source contribution. Only add
-> it if we create a distinct contribution and have its URL.
+> **Open Source mini challenge:** public repository at
+> <https://github.com/svarma143-ctrl/screentostream-video-timeline>. It is a
+> separate, additional contribution; the primary Alexa+ repository is not being
+> double-counted.
 
-## Challenge facts checked on 2026-10-21
+## Challenge facts checked on 2026-10-22
 
 - The Alexa+ track accepts a **self-hosted MCP server** speaking MCP
   **2025-11-25+** over **Streamable HTTP**, or an **Agent Skill**. A simulated
@@ -19,10 +26,16 @@
 - The Alexa+ resources link the open Agent Skills and Streamable HTTP docs. They
   do **not** require Alexa+ Preview console access for the self-hosted path.
 - The **AWS Builder** mini challenge accepts documented AWS integrations. Our
-  integration is Amazon Bedrock Runtime through `boto3`.
+  integration is Amazon Bedrock Runtime through `boto3`, with a Bedrock
+  Converse tool-use loop that orchestrates the 14 MCP tools.
+- Alexa+ already offers native travel planning and is adding booking partners
+  such as Expedia and eDreams ODIGEO. We position ScreenToStream as a reference
+  MCP add-on for the content-to-transaction seam, not as a replacement for
+  those travel agents.
 - The **Open Source** mini challenge requires a **new, additional** open-source
   project or a contribution to a public repository during the hackathon window.
-  The primary repo alone is not being claimed under that mini challenge.
+  We created a separate `screentostream-video-timeline` schema repository; the
+  primary Alexa+ repo is not being double-counted.
 - The challenge resources page says **AWS credit codes are exhausted as of
   October 7, 2026**, and it is no longer accepting credit requests. Do not wait
   for a challenge code; use AWS Free Tier or an existing account.
@@ -50,6 +63,23 @@ books it, and sends the itinerary card back to the TV.
 The repository includes the real MCP server, the OAuth 2.1 + PKCE flow, 14
 tools, SQLite persistence, an SSE TV overlay, and a browser client that is an
 actual MCP client rather than a mocked chat surface.
+
+### Media to upload
+
+1. **Simulator overview** — the TV moment, Alexa+ conversation, live tool trace,
+   and OAuth state in one surface.
+
+   ![ScreenToStream Concierge simulator](screenshots/simulator.jpg)
+
+2. **TV overlay** — the itinerary card returned by the real `send_to_tv` MCP
+   tool over SSE.
+
+   ![Trip card on the simulated TV](screenshots/tv-overlay.jpg)
+
+3. **AWS agentic loop** — the Bedrock Converse tool-use loop used for the AWS
+   Builder mini challenge.
+
+   ![Bedrock Converse agentic tool loop](screenshots/aws-agentic-loop.png)
 
 ---
 
@@ -85,6 +115,50 @@ Alexa+ calls the Concierge MCP server. The server:
 If the TV is off, the same server switches to standalone concierge mode and
 plans from a destination and a sentence.
 
+### Potential impact
+
+The useful moment is not a blank search box; it is the moment a guest is already
+engaged with a show. The target guest is in the living room, already has Alexa+,
+and has just seen a place they want to go. The friction is not discovery; it is
+the handoff from inspiration to a concrete plan. Fire TV reaches that moment at
+home, and Alexa+ is already the voice surface in the room. If that context
+becomes a typed, permissioned request, the guest can act without opening another
+app or retyping a destination. The same pattern extends beyond travel: a scene,
+a product, a recipe, or a ticket can become a structured, auditable transaction.
+
+For this hackathon, the credible near-term case is a travel add-on: high-intent
+discovery from content, deterministic pricing and availability, a held quote, a
+simulated booking, and a card back on the TV. In the seeded demo, one sentence
+produces a two-night Kyoto machiya stay, two experiences, two dinners, a
+day-by-day plan, a held quote, and a confirmation—without retyping the
+destination. The inventory is simulated, but the MCP contract, OAuth flow, and
+transaction state machine are real.
+
+### Design
+
+The simulator puts the TV moment, the Alexa+ conversation, the OAuth state, the
+live MCP tool trace, and the returned TV card on one screen. The same surface is
+the demo, the protocol inspector, and the product walkthrough. That is
+deliberate: judges can see the real request path instead of a mocked chat UI.
+
+### Relationship to Alexa+ native travel planning
+
+Alexa+ already supports trip planning and is adding booking partners such as
+Expedia and eDreams ODIGEO. We are not claiming to invent conversational travel
+or to replace those agents.
+
+ScreenToStream is a reference Alexa+ MCP add-on for a different seam: it starts
+from the Fire TV moment the guest is already watching, turns that context into a
+typed `TravelIntent`, and carries it through a deterministic quote, a simulated
+booking, a TV card over SSE, and a calendar export. The travel inventory is
+simulated. The contribution is the context-to-transaction bridge and a working,
+inspectable implementation of the MCP/OAuth contract.
+
+It is also not a classic Alexa skill in the Skills store; it is a self-hosted
+MCP server designed for the Alexa+ MCP add-on path. See Amazon's [Alexa+ Travel
+Planning help](https://www.amazon.com/gp/help/customer/display.html?nodeId=TnoUUverxu5bfPUs7l)
+and the [Alexa+ MCP Toolkit overview](https://developer.amazon.com/docs/alexaplus/add-ons/mcp-toolkit-overview.html).
+
 ### How we built it
 
 - **Alexa+ / MCP:** FastAPI + FastMCP, Streamable HTTP at `/mcp`, protocol
@@ -95,12 +169,15 @@ plans from a destination and a sentence.
 - **Tools:** 14 MCP tools covering viewing context, catalog, planning,
   refinement, quotes, bookings, profile preferences, TV handoff, and calendar
   export.
-- **Simulator:** a Fire TV pane, an Echo Show conversation, a live tool trace,
-  eight switchable scenes, frame upload, voice output, and an SSE TV overlay.
-  It authenticates with a real bearer token and calls the real `/mcp` endpoint.
+- **Simulator:** a simulated Fire TV pane, a simulated Echo Show conversation,
+  a live tool trace, eight switchable scenes, frame upload, voice output, and an
+  SSE TV overlay. It authenticates with a real bearer token and calls the real
+  `/mcp` endpoint. This is a browser simulator, not a Fire TV app.
 - **AWS:** Amazon Bedrock Runtime through `boto3`; Converse for structured
-  intent, narrative, refinement, vision, and the tool loop; InvokeModel for
-  Titan Image Generator or Nova Canvas hero art.
+  intent, narrative, refinement, vision, and a multi-round agentic tool loop;
+  InvokeModel for Nova Canvas or Titan hero art. The model chooses an MCP tool,
+  the simulator executes it through `/mcp`, and the result drives the next
+  Converse turn.
 - **Fallback:** deterministic catalog, pricing, planning, and rules routing when
   no cloud provider is configured. The demo works without credentials.
 - **Storage:** SQLite for viewing sessions, trips, quotes, bookings,
@@ -128,8 +205,9 @@ plans from a destination and a sentence.
 - A browser simulator that exercises the real protocol rather than a fake REST
   route.
 - A complete plan → refine → quote → book → TV-card → calendar flow.
-- A Bedrock adapter with mocked-runtime tests and a separate live readiness
-  gate.
+- A Bedrock adapter with mocked-runtime tests, a loop-level test that executes
+  an MCP tool and feeds the result back to Converse, and a separate live
+  readiness gate.
 - A credential-free path that judges can run immediately.
 - A public repo with CI, Docker verification, a friction log, and an
   architecture blueprint.
@@ -203,6 +281,11 @@ docker compose up --build
 
 ### Judge testing notes
 
+- **Fast judge path:** run `make demo`, open `http://127.0.0.1:8000`, and click
+  **Play the scene**. No account, API key, or email is required.
+- `DEMO_MODE=true` and sample data are enabled by default. The OAuth **Link
+  account** button is optional; it demonstrates the real PKCE consent flow with
+  the seeded `demo-user` account, but the product flow works without linking.
 - No private credentials are required for the deterministic path.
 - The submission-path rationale, optional Alexa+ console steps, and evidence
   checklist are in [`docs/ALEXA_PLUS_ONBOARDING.md`](ALEXA_PLUS_ONBOARDING.md).
@@ -211,8 +294,8 @@ docker compose up --build
 - The Alexa+ client ID is `alexa-plus-client`.
 - A public tunnel is optional for judging; it is required only for a real
   Alexa+ client that cannot reach localhost.
-- Bedrock is optional. The adapter and tests are in the repo; live AWS requires
-  the reviewer's own credentials and model access.
+- Bedrock is optional. The adapter, agentic loop, and mocked tests are in the
+  repo; live AWS requires the reviewer's own credentials and model access.
 
 ---
 
@@ -220,10 +303,14 @@ docker compose up --build
 
 **AWS service:** Amazon Bedrock Runtime through `boto3`.
 
-- **Converse API:** structured intent, narrative, refinement, and the simulator
-  tool loop.
-- **Multimodal Converse:** Fire TV frame understanding with Claude image blocks.
-- **InvokeModel:** Titan Image Generator v1 or Nova Canvas hero art.
+- **Agentic tool loop:** Bedrock Converse returns `toolUse` blocks; the
+  simulator executes the selected MCP tool through the real OAuth-protected
+  `/mcp` endpoint; the `toolResult` is appended and the model decides the next
+  step for up to six rounds.
+- **Converse API:** structured intent, narrative, refinement, and the agentic
+  tool loop, using `global.anthropic.claude-sonnet-4-6` by default.
+- **Multimodal Converse:** frame understanding with Claude image blocks.
+- **InvokeModel:** Nova Canvas (default, native 16:9) or Titan hero art.
 - **IAM:** documented least-privilege policy and first-use Marketplace
   permissions.
 - **Readiness gate:** `make bedrock-check` makes one real Converse call and
@@ -231,11 +318,50 @@ docker compose up --build
 - **Fallback:** deterministic rules and catalog path when AWS is not configured.
 
 Full operator guide: [`docs/AWS_BEDROCK.md`](AWS_BEDROCK.md).  
+Agentic loop design and evidence: [`docs/AWS_AGENTIC_LOOP.md`](AWS_AGENTIC_LOOP.md).
+
 From-zero AWS account guide: [`docs/AWS_ACCOUNT_SETUP.md`](AWS_ACCOUNT_SETUP.md).
 
-> **Honest status:** the Bedrock adapter and mocked tests are complete. Live AWS
-> validation is pending an AWS account and model access. The public demo uses
-> the deterministic fallback until those credentials exist.
+> **Honest status:** the Bedrock adapter, the mocked loop-level test, and the
+> live gate are complete. Live AWS validation is pending an AWS account and
+> model access. The public demo uses the deterministic fallback and says so.
+> This is a single-service Bedrock integration with an agentic loop; it does
+> not claim AgentCore, Strands, or a deployed AWS runtime.
+
+---
+
+## Open Source mini challenge
+
+- **Contribution:** Video-to-Geospatial Timeline Schema
+- **Repository:** <https://github.com/svarma143-ctrl/screentostream-video-timeline>
+- **Contribution URL:** the same repository (new project)
+- **GitHub username:** `svarma143-ctrl`
+- **CI:** [GitHub Actions run](https://github.com/svarma143-ctrl/screentostream-video-timeline/actions/runs/39776675496) — passing
+- **License:** MIT
+
+**What I did:** I created a standalone, MIT-licensed JSON Schema 2020-12
+contract for “shoppable/bookable video.” It maps time ranges in a video to a
+scene, a geospatial place, supporting evidence, confidence, and optional
+bookable catalog references. The repository includes two examples, a Python
+validator with semantic checks, nine tests, CI, and a short integration guide
+for MCP tool results. It was extracted from the working ScreenToStream Concierge
+reference implementation during the hackathon window, but it is a separate,
+reusable project rather than a copy of the primary app.
+
+**How it works:** A content pipeline or MCP tool emits a timeline document with
+`media`, `timeline[]`, `place`, `scene`, `evidence`, and optional `bookable`
+entries. The validator enforces time ordering, non-overlap, media duration,
+confidence ranges, coordinate bounds, and core-field hygiene. The schema keeps
+observations separate from offers: `catalog_ref` is a stable reference, while
+price and availability remain hints that a transactional system must confirm.
+`extensions` carries vendor-specific data without polluting the portable core.
+
+**Why it matters:** Video is a rich intent signal, but most metadata formats
+stop at describing the media. This contract gives builders a portable way to
+carry the moment on screen into an MCP tool, a planning flow, or a booking
+handoff without inventing a new payload for every content partner. It is
+domain-neutral, so the same shape can support travel, retail, food, or live
+events.
 
 ---
 
@@ -269,13 +395,18 @@ the TV context is a strong differentiator.
 ### Amazon Bedrock
 
 **What worked:** the Converse API is a clean abstraction for text, vision, and
-tool use. `boto3` is familiar, and the Titan/Nova image path is straightforward.
+tool use. The tool-use loop is a good fit for MCP: the model chooses a tool, the
+MCP client executes it, and the result goes back as a `toolResult`. `boto3` is
+familiar, and the Nova/Titan image path is straightforward once the request
+shapes are normalized.
 
 **What needs work:** model IDs and inference profiles are not portable across
-regions/accounts; first-use model activation is opaque; `boto3` is synchronous;
-and the failure modes for IAM versus model access versus region look similar.
-A “test this model” button and a copyable inference-profile ID would remove most
-first-run failures.
+regions/accounts; the current default is a global profile, but accounts differ;
+first-use model activation is opaque; `boto3` is synchronous; and the failure
+modes for IAM versus model access versus region look similar. A “test this
+model” button and a copyable inference-profile ID would remove most first-run
+failures. A canonical OpenAI-style ↔ Converse tool-use translation example would
+also save every MCP builder the same adapter work.
 
 **Onboarding:** mocked tests were easy; live access was the hard part because it
 depends on account activation, model access, Marketplace permissions, and the
@@ -306,10 +437,12 @@ Full feedback: [`docs/PRODUCT_FEEDBACK.md`](PRODUCT_FEEDBACK.md).
 
 ## Friction log
 
-The detailed friction log is in [`docs/FRICTION_LOG.md`](FRICTION_LOG.md). It
-covers the bare `401`, protocol negotiation, OAuth host coupling, media-context
-design, Bedrock model access, synchronous `boto3`, Converse tool use,
-credential-free testing, and the simulator gap.
+The guided friction log is in
+[`docs/FRICTION_LOG_V2.md`](FRICTION_LOG_V2.md). It follows the Trag.dev
+friction-log structure: BLUF and grade, persona, scoped checklist, pros/cons,
+severity-ranked friction points, questions, prioritized recommendations, test
+environment, and success/failure evidence. The detailed engineering log remains
+in [`docs/FRICTION_LOG.md`](FRICTION_LOG.md).
 
 ---
 
@@ -317,7 +450,9 @@ credential-free testing, and the simulator gap.
 
 **New project.** The public repository and all source code were created during
 the hackathon submission window. No pre-existing production project is being
-submitted.
+submitted. The separate
+[Video-to-Geospatial Timeline Schema](https://github.com/svarma143-ctrl/screentostream-video-timeline)
+repository is also new and was created during the same window.
 
 ---
 
@@ -333,13 +468,27 @@ submitted.
 - [x] Product feedback
 - [x] Friction log
 - [x] CI and Docker verification
-- [ ] Demo video under 3 minutes, public on YouTube/Vimeo
+- [x] Separate Open Source schema repository published with passing CI
+- [x] Demo video recorded — updated Andrew agentic cut is 1:28, well under the 3:00 limit
+- [ ] Demo video published publicly on YouTube/Vimeo
 - [ ] Devpost text description pasted in
 - [ ] Track and mini challenge selected
 - [ ] Final submission clicked before **Oct 23, 12:00 PM PDT**
 
 ---
 
-## Demo video outline
+## Demo video
 
-See [`docs/DEMO_SCRIPT.md`](DEMO_SCRIPT.md) for the shot list and timing.
+The updated submission cut is
+`demo/screentostream-concierge-demo-andrew-agentic.mp4` (Andrew voice, 1:28,
+1920×1080, H.264/AAC, English neural voiceover, soft English captions). Its AWS
+segment shows the Bedrock Converse tool-use loop, a passing adapter/loop test,
+the live gate, and an explicit deterministic-fallback disclaimer. It does
+**not** fake a live AWS call.
+
+The previous Ava and Andrew renders remain in `demo/` as alternates. Upload the
+updated Andrew MP4 to YouTube or Vimeo, set visibility to **Public**, then paste
+the URL into this document and the Devpost form. The caption file is
+`demo/screentostream-concierge-demo-agentic.srt`.
+
+See [`docs/DEMO_SCRIPT.md`](DEMO_SCRIPT.md) for the shot list and narration.

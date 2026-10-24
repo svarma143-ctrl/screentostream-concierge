@@ -103,7 +103,7 @@ class TravelIntent(BaseModel):
     confidence: float = 0.7
     summary: str = ""
     request: str = ""
-    source: Literal["deepseek", "rules", "manual"] = "rules"
+    source: Literal["bedrock", "deepseek", "rules", "manual"] = "rules"
     model: str | None = None
     scene_id: str | None = None
     meta: dict[str, Any] = Field(default_factory=dict)
@@ -115,7 +115,7 @@ class TravelIntent(BaseModel):
         message: str,
         *,
         viewing: dict | None = None,
-        source: Literal["deepseek", "rules", "manual"] | None = None,
+        source: Literal["bedrock", "deepseek", "rules", "manual"] | None = None,
         model: str | None = None,
     ) -> TravelIntent:
         """Coerce provider/fallback tokens into the canonical schema."""
@@ -123,7 +123,7 @@ class TravelIntent(BaseModel):
         data = dict(raw or {})
         meta = dict(data.get("_meta") or {})
         inferred_source = source or meta.get("provider") or "rules"
-        if inferred_source not in {"deepseek", "rules", "manual"}:
+        if inferred_source not in {"bedrock", "deepseek", "rules", "manual"}:
             inferred_source = "rules"
 
         raw_intent = str(data.get("intent") or "other").strip().lower()
@@ -185,7 +185,7 @@ class TravelIntent(BaseModel):
                 **meta,
                 "provider": inferred_source,
                 "model": model or meta.get("model"),
-                "live": bool(meta.get("live", inferred_source == "deepseek")),
+                "live": bool(meta.get("live", inferred_source in {"bedrock", "deepseek"})),
             },
         )
 
@@ -287,63 +287,63 @@ def agent_matrix() -> dict[str, Any]:
     actions = [
         {
             "intent": "plan_trip",
-            "modes": ["rules", "deepseek"],
+            "modes": ["rules", "bedrock", "deepseek"],
             "tools": ["get_viewing_context", "plan_trip", "send_to_tv"],
             "scope": "concierge.read",
             "description": "Turn a scene or destination into a held itinerary.",
         },
         {
             "intent": "refine_trip",
-            "modes": ["rules", "deepseek"],
+            "modes": ["rules", "bedrock", "deepseek"],
             "tools": ["refine_trip", "get_trip"],
             "scope": "concierge.read",
             "description": "Apply a spoken change to the active trip.",
         },
         {
             "intent": "quote_trip",
-            "modes": ["rules", "deepseek"],
+            "modes": ["rules", "bedrock", "deepseek"],
             "tools": ["quote_trip", "send_to_tv"],
             "scope": "concierge.book",
             "description": "Create a 15-minute held quote.",
         },
         {
             "intent": "book",
-            "modes": ["rules", "deepseek"],
+            "modes": ["rules", "bedrock", "deepseek"],
             "tools": ["quote_trip", "book_trip", "send_to_tv"],
             "scope": "concierge.book",
             "description": "Confirm a simulated booking after explicit consent.",
         },
         {
             "intent": "ask_dish",
-            "modes": ["rules", "deepseek"],
+            "modes": ["rules", "bedrock", "deepseek"],
             "tools": ["get_dish_story", "send_to_tv"],
             "scope": "concierge.read",
             "description": "Tell the story of the dish in the scene.",
         },
         {
             "intent": "remember",
-            "modes": ["rules", "deepseek"],
+            "modes": ["rules", "bedrock", "deepseek"],
             "tools": ["remember_preference"],
             "scope": "profile.write",
             "description": "Persist a durable travel or dining preference.",
         },
         {
             "intent": "send_to_tv",
-            "modes": ["rules", "deepseek"],
+            "modes": ["rules", "bedrock", "deepseek"],
             "tools": ["send_to_tv"],
             "scope": "concierge.read",
             "description": "Push the current card to the Fire TV SSE feed.",
         },
         {
             "intent": "stay_details",
-            "modes": ["rules", "deepseek"],
+            "modes": ["rules", "bedrock", "deepseek"],
             "tools": ["get_trip"],
             "scope": "concierge.read",
             "description": "Read the selected stay from the active trip.",
         },
         {
             "intent": "other",
-            "modes": ["rules", "deepseek"],
+            "modes": ["rules", "bedrock", "deepseek"],
             "tools": ["get_viewing_context"],
             "scope": "concierge.read",
             "description": "Orient the guest in the current scene or standalone mode.",
@@ -357,10 +357,16 @@ def agent_matrix() -> dict[str, Any]:
                 "fallback": True,
                 "live": False,
             },
+            "bedrock": {
+                "provider": "Amazon Bedrock",
+                "latency": "provider",
+                "fallback": False,
+                "live": True,
+            },
             "deepseek": {
                 "provider": "DeepSeek",
                 "latency": "provider",
-                "fallback": False,
+                "fallback": True,
                 "live": True,
             },
         },

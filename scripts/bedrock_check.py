@@ -8,7 +8,10 @@ instead of silently returning a deterministic payload.
 
 Usage:
     uv run python scripts/bedrock_check.py
-    uv run python scripts/bedrock_check.py --model us.anthropic.claude-3-5-sonnet-20241022-v2:0
+    uv run python scripts/bedrock_check.py --model us.anthropic.claude-sonnet-4-6
+
+The default is the current global Claude Sonnet 4.6 inference profile. Use
+``--model`` when your account exposes a regional or direct model ID instead.
 """
 
 from __future__ import annotations
@@ -92,7 +95,11 @@ def main() -> int:
                 "      Check model access in the Bedrock console for this region.", file=sys.stderr
             )
             print(
-                "      Claude may require an inference-profile ID, e.g. us.anthropic...",
+                "      Claude may require a global or regional inference-profile ID,",
+                file=sys.stderr,
+            )
+            print(
+                "      e.g. global.anthropic... or us.anthropic...",
                 file=sys.stderr,
             )
             print(

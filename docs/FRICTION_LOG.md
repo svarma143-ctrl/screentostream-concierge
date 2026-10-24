@@ -182,16 +182,16 @@ Every web-based MCP client will hit the same throttling problem. A reference imp
 
 ## F-08 — Bedrock model access and inference profiles are not portable
 
-**Observed.** Bedrock is region- and account-specific. The default direct model ID in this repo is:
+**Observed.** Bedrock is region- and account-specific. The initial direct model ID used during the build was:
 
 ```text
 anthropic.claude-3-5-sonnet-20241022-v2:0
 ```
 
-Some accounts and regions require a cross-region inference profile instead, for example:
+The repo now defaults to the current global inference profile `global.anthropic.claude-sonnet-4-6`. Some accounts and regions require a different regional profile instead, for example:
 
 ```text
-us.anthropic.claude-3-5-sonnet-20241022-v2:0
+us.anthropic.claude-sonnet-4-6
 ```
 
 Model activation also depends on the region and account. In commercial regions, most Bedrock models are now enabled on first invocation when the principal has the AWS Marketplace permissions, but Anthropic models still require a one-time first-time-use form, and some accounts need additional account-level access. A valid IAM policy alone is not enough. The first failure is often an access error that looks like a code problem.
@@ -265,6 +265,7 @@ The card CSS uses `background-size: cover`, so a square Titan image crops cleanl
 - Converse structured intent parsing;
 - OpenAI tool schema → `toolSpec` translation;
 - assistant `tool_calls` → `toolUse` and `toolResult`;
+- a loop-level test that executes an MCP tool and feeds the result into the next Converse turn;
 - frame data URL → Converse image block;
 - Titan/Nova image response caching;
 - provider factory/status preference.

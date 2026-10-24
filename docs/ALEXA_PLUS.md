@@ -301,11 +301,11 @@ The hot path is deterministic and usually returns `ready`; planning is the escap
 
 The simulator exposes the same logic engine that the MCP server uses:
 
-- `POST /api/simulator/intent` maps a sentence to the typed `TravelIntent` schema. With Bedrock or DeepSeek configured it uses the structured intent prompt; without either it uses the deterministic router. All paths emit the same fields.
+- `POST /api/simulator/intent` maps a sentence to the typed `TravelIntent` schema. With a reasoning provider configured it uses the structured intent prompt; without one it uses the deterministic router. All paths emit the same fields.
 - `GET /api/simulator/matrix` lists every supported action, the modes that can execute it, the MCP tools it calls, the scope it needs, and the demo control routes.
 - `GET /api/simulator/context?session_id=…` returns the persisted chain: user turn, validated intent, assistant turn, and tool trace. The chain survives reloads and restarts.
-- `POST /api/viewing/frame` returns `image` metadata (format, dimensions, orientation, aspect ratio) and passes it to the Bedrock/MiniMax vision prompt.
-- `trip_card_ready` is an SSE event published after background MiniMax card synthesis. The simulator swaps the richer card in place; the Fire TV receives a matching `tv_card` event.
+- `POST /api/viewing/frame` returns `image` metadata (format, dimensions, orientation, aspect ratio) and passes it to the vision-provider prompt.
+- `trip_card_ready` is an SSE event published after background vision-provider card synthesis. The simulator swaps the richer card in place; the Fire TV receives a matching `tv_card` event.
 
 The production turn still uses the MCP transport. These routes are inspection and demo controls, not a second tool API.
 

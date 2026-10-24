@@ -1,6 +1,6 @@
 # Submission checklist
 
-Last verified: **2026-10-21**
+Last verified: **2026-10-22**
 
 **Deadline:** **2026-10-23, 12:00 PM PDT** (Build, Ship, Shape: Amazon Developer
 Hackathon).
@@ -38,12 +38,13 @@ submission, **optional** = useful but not required.
 |---|---|---|
 | Amazon Bedrock Runtime through `boto3` | done | `app/aws_bedrock.py` |
 | Converse API for structured text | done | Intent, narrative, refinement, card copy |
-| Converse tool use for the simulator loop | done | Tool-use block translation in `app/simulator.py` |
+| Converse tool use for the agentic loop | done | Model-selected MCP tools executed through `/mcp`; `_SessionRunner.run_agent()` |
 | Multimodal frame understanding | done | Claude image blocks from Fire TV frame data |
-| Image generation through `InvokeModel` | done | Titan Image Generator v1 or Nova Canvas |
+| Image generation through `InvokeModel` | done | Nova Canvas default; Titan v1 supported |
 | Provider abstraction, not a new MCP endpoint | done | `app/providers.py`; flat `/mcp` unchanged |
 | Deterministic fallback without credentials | done | Rules provider selected when no keys exist |
-| Mocked Bedrock adapter tests | done | `tests/test_bedrock.py` |
+| Mocked Bedrock adapter and loop-level tests | done | `tests/test_bedrock.py` |
+| Agentic loop design document | done | `docs/AWS_AGENTIC_LOOP.md` |
 | Explicit live readiness gate | done | `scripts/bedrock_check.py`; `make bedrock-check` |
 | IAM policy and setup guide | done | `docs/AWS_ACCOUNT_SETUP.md`; `docs/AWS_BEDROCK.md` |
 | Real AWS account and model access | pending | Blocked on AWS sign-up |
@@ -62,12 +63,12 @@ submission, **optional** = useful but not required.
 | Text description | done | Copy-paste sections in `docs/DEVPOST_SUBMISSION.md` |
 | Track selection: **Alexa+** | pending | Select in the Devpost form |
 | Mini challenge: **AWS Builder** | pending | Select in the Devpost form |
-| Open Source mini challenge | optional | Do **not** claim without a separate additional contribution |
+| Open Source mini challenge | ready | <https://github.com/svarma143-ctrl/screentostream-video-timeline> — public, MIT, CI passing; select it in Devpost |
 | Product feedback | done | `docs/PRODUCT_FEEDBACK.md`; short form in `docs/DEVPOST_SUBMISSION.md` |
 | Feature requests | done | Five prioritized requests in `docs/DEVPOST_SUBMISSION.md` |
-| Friction log (bonus) | done | `docs/FRICTION_LOG.md` |
-| Demo video under 3 minutes | pending | Record from `docs/DEMO_SCRIPT.md`; upload publicly |
-| Public video URL | pending | Paste into Devpost and `docs/DEVPOST_SUBMISSION.md` |
+| Friction log (bonus) | done | `docs/FRICTION_LOG_V2.md` (guided); `docs/FRICTION_LOG.md` (detailed) |
+| Demo video under 3 minutes | done | `demo/screentostream-concierge-demo-andrew-agentic.mp4` — updated Andrew cut, 1:28, 1080p. Old Ava/Andrew renders preserved. |
+| Public video URL | pending | Upload the updated Andrew render to YouTube/Vimeo; paste the public URL into Devpost and `docs/DEVPOST_SUBMISSION.md` |
 | Final Devpost submission | pending | Submit before **2026-10-23 12:00 PM PDT** |
 
 ---
@@ -76,7 +77,8 @@ submission, **optional** = useful but not required.
 
 | Check | Status | Command or document |
 |---|---|---|
-| Unit/integration suite | done | `make test` — **43 passed** |
+| One-command judge demo | done | `make demo` → `http://127.0.0.1:8000`; no account, API key, or email |
+| Unit/integration suite | done | `make test` — **44 passed** |
 | Ruff lint | done | `make lint` |
 | Ruff formatting | done | `make format-check` |
 | Local OAuth/MCP smoke | done | `make smoke` |
@@ -86,7 +88,7 @@ submission, **optional** = useful but not required.
 | In-container MCP smoke | done | `docs/DOCKER_VERIFICATION.md` |
 | Dockerfile lint | done | `hadolint Dockerfile` |
 | GitHub Actions | done | Python checks and Docker build/health check passed on the first push |
-| Demo recording | pending | `docs/DEMO_SCRIPT.md` — target 2:45, hard limit 3:00 |
+| Demo recording | done | `demo/screentostream-concierge-demo-andrew-agentic.mp4` — **1:28**, 1920×1080, English neural voiceover, soft captions |
 
 ---
 
@@ -104,12 +106,13 @@ submission, **optional** = useful but not required.
 - [x] Push repository to GitHub
 - [x] Confirm Actions pass after the first push
 - [ ] Add the public repository URL to the Devpost submission
-- [ ] Record and upload the sub-3-minute demo
+- [x] Record the sub-3-minute demo — updated Andrew agentic cut is 1:28
+- [ ] Upload the demo to YouTube/Vimeo and add the public URL
 - [ ] Select **Alexa+** and **AWS Builder** in Devpost
 - [ ] Paste the product feedback and feature requests
 - [ ] Submit before **2026-10-23 12:00 PM PDT**
 - [ ] Optional: confirm a stable public tunnel before Alexa+ Preview onboarding
-- [ ] Optional: create a separate open-source contribution if claiming the Open Source mini challenge
+- [x] Publish the separate `screentostream-video-timeline` schema repo — <https://github.com/svarma143-ctrl/screentostream-video-timeline> (CI passing)
 
 ---
 

@@ -1,4 +1,4 @@
-"""Structured prompt generators for DeepSeek and MiniMax.
+"""Structured prompt generators shared by Bedrock and the fallback adapters.
 
 Prompts live here instead of inside provider methods so that every model call
 is inspectable, testable, and reusable by the agent runtime. Each builder

@@ -6,7 +6,7 @@ contract; Bedrock sits behind the provider adapter layer.
 
 This document is the operator's guide for the AWS Builder Mini Challenge entry.  
 For a from-zero AWS account, IAM, and first-time-use walkthrough, see the **[AWS Account Setup Guide](AWS_ACCOUNT_SETUP.md)**.  
-For the judging document, see the **[AWS Architectural Blueprint](AWS_ARCHITECTURE_BLUEPRINT.md)**; for the build retrospective, see the **[Open Source Friction Log](FRICTION_LOG.md)**.
+For the judging document, see the **[AWS Architectural Blueprint](AWS_ARCHITECTURE_BLUEPRINT.md)**; for the agentic loop design, see **[Bedrock Converse agentic tool loop](AWS_AGENTIC_LOOP.md)**; for the build retrospective, see the **[guided friction log](FRICTION_LOG_V2.md)** and the **[detailed engineering log](FRICTION_LOG.md)**.
 
 ---
 
@@ -51,9 +51,9 @@ BEDROCK_MODE=live
 AWS_REGION=us-east-1
 # Optional alternative to IAM access keys:
 # AWS_BEARER_TOKEN_BEDROCK=<short-term key from the Bedrock console>
-BEDROCK_TEXT_MODEL_ID=anthropic.claude-3-5-sonnet-20241022-v2:0
-BEDROCK_VISION_MODEL_ID=anthropic.claude-3-5-sonnet-20241022-v2:0
-BEDROCK_IMAGE_MODEL_ID=amazon.titan-image-generator-v1
+BEDROCK_TEXT_MODEL_ID=global.anthropic.claude-sonnet-4-6
+BEDROCK_VISION_MODEL_ID=global.anthropic.claude-sonnet-4-6
+BEDROCK_IMAGE_MODEL_ID=amazon.nova-canvas-v1:0
 BEDROCK_IMAGE_QUALITY=standard
 BEDROCK_IMAGE_WIDTH=0
 BEDROCK_IMAGE_HEIGHT=0
@@ -128,31 +128,31 @@ The defaults are:
 
 | Purpose | Default model |
 |---|---|
-| Intent, narrative, refinement, tool loop | `anthropic.claude-3-5-sonnet-20241022-v2:0` |
+| Intent, narrative, refinement, agentic tool loop | `global.anthropic.claude-sonnet-4-6` |
 | Frame understanding | same Claude model |
-| Hero art | `amazon.titan-image-generator-v1` |
+| Hero art | `amazon.nova-canvas-v1:0` |
 
-Some AWS accounts and regions expose Claude through a cross-region inference
-profile. If the direct model ID is rejected, use the exact inference-profile
-ID shown in your Bedrock console, for example:
-
-```dotenv
-BEDROCK_TEXT_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
-BEDROCK_VISION_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
-```
-
-Newer models may use a global profile such as
-`global.anthropic.claude-opus-5`. Use the exact ID shown on the model card in
-your account; the adapter accepts any Converse-capable model ID.
-
-For a native 16:9 hero, use:
+The default is the current Claude Sonnet 4.6 **global inference profile**. Some
+AWS accounts and regions expose Claude through a different regional or direct
+ID. If the default is rejected, use the exact ID shown in your Bedrock console,
+for example:
 
 ```dotenv
-BEDROCK_IMAGE_MODEL_ID=amazon.nova-canvas-v1:0
+BEDROCK_TEXT_MODEL_ID=us.anthropic.claude-sonnet-4-6
+BEDROCK_VISION_MODEL_ID=us.anthropic.claude-sonnet-4-6
 ```
 
-Titan v1 is rendered at 1024×1024. Nova Canvas uses 1280×720 for the card
-hero. The card CSS uses `background-size: cover`, so both crop cleanly.
+Use the exact ID shown on the model card in your account; the adapter accepts
+any Converse-capable model ID.
+
+Nova Canvas is the default because it renders a native 16:9 card at 1280×720.
+Titan v1 remains supported at 1024×1024. To use it:
+
+```dotenv
+BEDROCK_IMAGE_MODEL_ID=amazon.titan-image-generator-v1
+```
+
+The card CSS uses `background-size: cover`, so both crop cleanly.
 
 ---
 
@@ -241,13 +241,24 @@ credentials are missing.
 - A mock branch would hide that failure and make a “live Bedrock” claim
   impossible to verify.
 - Provider fallback already lives one layer up in `app/providers.py`. When
-  Bedrock is disabled, the planner and simulator use DeepSeek/MiniMax or the
-  deterministic rules path. The adapter itself should only speak to Bedrock.
+  Bedrock is disabled, the planner and simulator use the optional DeepSeek/MiniMax
+  adapters or the deterministic rules path. The adapter itself should only speak
+  to Bedrock.
 - For an explicit live check, run `make bedrock-check`. It makes a real
   `Converse` call and returns an actionable error if credentials, region,
   model access, or IAM are wrong.
 
-### Tool-loop translation
+### Agentic tool loop
+
+The AWS integration is a multi-round Converse tool-use loop, not a single
+prompt. `_SessionRunner.run_agent()` in `app/simulator.py`:
+
+1. lists the 14 MCP tools;
+2. sends the user message and tool schemas to Bedrock Converse;
+3. receives model-selected `toolUse` blocks;
+4. executes each call through the real OAuth-protected `/mcp` endpoint;
+5. appends the tool result as a `toolResult` block;
+6. repeats until the model answers or the round budget is exhausted.
 
 The simulator keeps using its existing OpenAI-style message list and MCP tool
 schemas. The Bedrock adapter translates:
@@ -257,7 +268,9 @@ schemas. The Bedrock adapter translates:
 - role `tool` results → Converse `toolResult` content blocks
 - Converse `toolUse` blocks → the simulator's generic call shape
 
-The tool calls still execute through the real MCP client against `/mcp`.
+The tool calls still execute through the real MCP client against `/mcp`. The
+full design, trace, and evidence are in
+**[AWS_AGENTIC_LOOP.md](AWS_AGENTIC_LOOP.md)**.
 
 ### Image handling
 
@@ -286,7 +299,7 @@ Before or while the server is running, make one real Bedrock call:
 ```bash
 make bedrock-check
 # or:
-uv run python scripts/bedrock_check.py --model us.anthropic.claude-3-5-sonnet-20241022-v2:0
+uv run python scripts/bedrock_check.py --model us.anthropic.claude-sonnet-4-6
 ```
 
 This is deliberately not mocked. A missing credential, disabled model,
@@ -306,7 +319,7 @@ Expected with Bedrock live:
     "configured": true,
     "mode": "live",
     "region": "us-east-1",
-    "text_model": "anthropic.claude-3-5-sonnet-20241022-v2:0"
+    "text_model": "global.anthropic.claude-sonnet-4-6"
   },
   "reasoner": "bedrock",
   "vision": "bedrock",
@@ -331,9 +344,9 @@ No-credential behavior is still a first-class path:
 BEDROCK_MODE=off LLM_MODE=auto uv run uvicorn app.main:app --port 8000
 ```
 
-That selects DeepSeek/MiniMax when keys exist, otherwise the deterministic
-rules provider. The simulator badge changes from `bedrock` to `deepseek`,
-`minimax`, or `rules` accordingly.
+That selects the optional DeepSeek/MiniMax adapters when keys exist, otherwise
+the deterministic rules provider. The simulator badge changes from `bedrock` to
+`deepseek`, `minimax`, or `rules` accordingly.
 
 ---
 
@@ -350,6 +363,8 @@ Coverage includes:
 - Converse structured intent parsing and provider metadata
 - OpenAI tool schema → Converse `toolSpec` translation
 - assistant `tool_calls` → `toolUse` and `toolResult` round trip
+- a full agent loop that executes an MCP tool and feeds the result into the next
+  Converse turn
 - frame data URL → Converse image block
 - Titan/Nova image response caching
 - provider factory and status selection
@@ -363,10 +378,10 @@ AWS credentials.
 
 **AWS Services Utilized:** Amazon Bedrock Runtime (`boto3`).
 
-**Active Models Configured:** `anthropic.claude-3-5-sonnet-20241022-v2:0` for
-the intent/reasoning core and multimodal frame understanding;
-`amazon.titan-image-generator-v1` (or `amazon.nova-canvas-v1:0`) for itinerary
-card imagery.
+**Active Models Configured:** `global.anthropic.claude-sonnet-4-6` for the
+intent/reasoning core, the agentic tool loop, and multimodal frame
+understanding; `amazon.nova-canvas-v1:0` for native 16:9 itinerary card
+imagery (Titan v1 is also supported).
 
 **Integration Strategy:** Inbound MCP requests hit the flat Streamable HTTP
 `/mcp` endpoint. The existing FastMCP tools call the shared planner and

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import base64
 
+from app.config import Settings
+
 PNG_1PX = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
 )
@@ -14,6 +16,14 @@ def test_health_and_catalog(client):
     catalog = client.get("/api/catalog").json()
     assert len(catalog["destinations"]) == 8
     assert len(catalog["scenes"]) == 8
+
+
+def test_blank_secret_key_uses_dev_secret_file(tmp_path, monkeypatch):
+    secret_path = tmp_path / "dev-secret.key"
+    monkeypatch.setenv("S2S_DEV_SECRET_PATH", str(secret_path))
+    settings = Settings(_env_file=None, secret_key="")
+    assert settings.secret_key
+    assert secret_path.read_text(encoding="utf-8").strip() == settings.secret_key
 
 
 def test_bootstrap_has_live_scene_and_demo_script(client):

@@ -1,0 +1,63 @@
+1
+00:00:00,300 --> 00:00:06,230
+This is ScreenToStream Concierge. It turns the show you're watching into a bookable weekend.
+
+2
+00:00:06,500 --> 00:00:14,420
+The simulator is a real MCP client. It completes OAuth 2.1 with PKCE before calling Alexa Plus.
+
+3
+00:00:15,000 --> 00:00:18,800
+Book a weekend stay here next spring.
+
+4
+00:00:18,800 --> 00:00:23,210
+The server resolves Kyoto, builds a two-night stay, and sends a card to the TV.
+
+5
+00:00:24,400 --> 00:00:31,100
+The guest can refine in natural language. Pricing stays deterministic, so the quote is instant.
+
+6
+00:00:32,200 --> 00:00:35,800
+The quote is held, then confirmed.
+
+7
+00:00:35,800 --> 00:00:39,500
+The server creates a simulated booking and exports a calendar file.
+
+8
+00:00:39,600 --> 00:00:43,800
+After confirmation, it creates a simulated booking,
+
+9
+00:00:43,800 --> 00:00:48,100
+sends the itinerary back to the TV, and exports a calendar file.
+
+10
+00:00:51,000 --> 00:00:53,450
+The card lands back on the TV.
+
+11
+00:00:54,500 --> 00:00:59,000
+Under the hood: MCP, Streamable HTTP, fourteen tools,
+
+12
+00:00:59,000 --> 00:01:04,390
+OAuth discovery, and the bare 401 Alexa Plus expects.
+
+13
+00:01:04,500 --> 00:01:12,000
+For the AWS Builder mini challenge, Bedrock Runtime is the preferred provider.
+
+14
+00:01:12,000 --> 00:01:17,000
+Converse handles intent, narrative, and tool use.
+
+15
+00:01:17,000 --> 00:01:21,370
+Titan or Nova generates card art. The deterministic fallback keeps the demo working without credentials.
+
+16
+00:01:22,200 --> 00:01:27,410
+The show ends. The trip begins. ScreenToStream Concierge.

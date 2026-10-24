@@ -192,7 +192,7 @@ For this repo, a good use-case description is:
 > ScreenToStream Concierge is a self-hosted Alexa+ MCP demo that turns a Fire TV
 > viewing moment into a travel and culinary itinerary. Amazon Bedrock Claude is
 > used for structured trip intent, narrative, and multimodal frame
-> understanding. Titan/Nova Canvas is used for itinerary card artwork.
+> understanding. Nova Canvas (or Titan) is used for itinerary card artwork.
 
 ---
 
@@ -274,30 +274,30 @@ Open the model card in the Bedrock console and copy the exact ID. Newer models
 may use a global or regional inference profile. Examples:
 
 ```dotenv
-BEDROCK_TEXT_MODEL_ID=global.anthropic.claude-opus-5
-BEDROCK_VISION_MODEL_ID=global.anthropic.claude-opus-5
+BEDROCK_TEXT_MODEL_ID=global.anthropic.claude-sonnet-4-6
+BEDROCK_VISION_MODEL_ID=global.anthropic.claude-sonnet-4-6
 ```
 
-or:
+or a regional profile:
 
 ```dotenv
-BEDROCK_TEXT_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
-BEDROCK_VISION_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
+BEDROCK_TEXT_MODEL_ID=us.anthropic.claude-sonnet-4-6
+BEDROCK_VISION_MODEL_ID=us.anthropic.claude-sonnet-4-6
 ```
 
 Do not guess. Use the ID shown for your account and region. The adapter accepts
 any Converse-capable model.
 
-For generated hero art, either:
-
-```dotenv
-BEDROCK_IMAGE_MODEL_ID=amazon.titan-image-generator-v1
-```
-
-or, for native 16:9:
+For generated hero art, the default is native 16:9:
 
 ```dotenv
 BEDROCK_IMAGE_MODEL_ID=amazon.nova-canvas-v1:0
+```
+
+Titan v1 remains supported:
+
+```dotenv
+BEDROCK_IMAGE_MODEL_ID=amazon.titan-image-generator-v1
 ```
 
 ---

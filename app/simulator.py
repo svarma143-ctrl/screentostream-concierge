@@ -2,8 +2,9 @@
 
 This is a real MCP client. It connects to the server's Streamable HTTP endpoint
 with an OAuth bearer token, discovers the tools, and executes them. When a
-DeepSeek key is present it runs a tool-calling loop; otherwise a deterministic
-router exercises the same tools so the demo never dies on stage.
+reasoning provider is configured it runs a multi-round, model-directed
+tool-calling loop; otherwise a deterministic router exercises the same tools so
+the demo never dies on stage.
 """
 
 from __future__ import annotations
@@ -301,9 +302,16 @@ class _SessionRunner:
             or "The TV is off, so I'm in standalone mode. Tell me a place and I'll build the trip."
         )
 
-    # ---------------------------------------------------------------- DeepSeek path
+    # ------------------------------------------------------- model-directed agent loop
 
-    async def run_deepseek(self) -> str:
+    async def run_agent(self) -> str:
+        """Run the reasoning-provider model-directed tool loop over the MCP tools.
+
+        The model chooses the next tool call. This method executes it through the
+        real MCP client, appends the tool result, and loops until the model
+        returns a final answer or the round budget is exhausted.
+        """
+
         tools = await self.client.list_tools()
         openai_tools = _tool_schema(tools)
         viewing = planner.get_viewing(self.session.user_id)
@@ -461,10 +469,10 @@ async def run_turn(message: str, session_id: str | None = None) -> dict:
     try:
         async with Client(_transport(), timeout=45) as client:
             runner = _SessionRunner(client, session, message)
-            if settings.simulator_deepseek_enabled:
+            if settings.simulator_model_enabled:
                 agent = settings.reasoner_name
                 try:
-                    reply = await runner.run_deepseek()
+                    reply = await runner.run_agent()
                 except ProviderError as exc:
                     error = str(exc)
                     agent = "rules-fallback"

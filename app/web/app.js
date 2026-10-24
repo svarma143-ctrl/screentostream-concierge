@@ -59,8 +59,8 @@ const els = {
   linkLabel: $("#linkLabel"),
   footerDot: $("#footerDot"),
   footerStatus: $("#footerStatus"),
-  providerDeepseek: $("#providerDeepseek"),
-  providerMinimax: $("#providerMinimax"),
+  providerReasoning: $("#providerReasoning"),
+  providerVision: $("#providerVision"),
   footerEndpoint: $("#footerEndpoint"),
   frameInput: $("#frameInput"),
   analyzing: $("#analyzing"),
@@ -737,14 +737,20 @@ function applyProviders(providers, agent) {
   const deepseek = providers.deepseek || {};
   const minimax = providers.minimax || {};
   const bedrockLive = bedrock.configured && bedrock.mode === "live";
-  els.providerDeepseek.textContent = bedrockLive
+  els.providerReasoning.textContent = bedrockLive
     ? "Bedrock text · live"
-    : `DeepSeek · ${deepseek.mode || "fallback"}`;
-  els.providerMinimax.textContent = bedrockLive
+    : deepseek.mode === "live"
+      ? "DeepSeek · live"
+      : "Reasoning · fallback";
+  els.providerVision.textContent = bedrockLive
     ? "Bedrock vision · live"
-    : `MiniMax · ${minimax.mode || "fallback"}`;
-  els.providerDeepseek.style.color = bedrockLive || deepseek.mode === "live" ? "var(--teal)" : "";
-  els.providerMinimax.style.color = bedrockLive || minimax.mode === "live" ? "var(--teal)" : "";
+    : minimax.mode === "live"
+      ? "MiniMax · live"
+      : "Vision · fallback";
+  els.providerReasoning.style.color =
+    bedrockLive || deepseek.mode === "live" ? "var(--teal)" : "";
+  els.providerVision.style.color =
+    bedrockLive || minimax.mode === "live" ? "var(--teal)" : "";
   const activeAgent = agent || providers.simulator_agent || "rules";
   els.agentBadge.textContent = activeAgent;
   els.agentBadge.className = `agent-badge ${activeAgent !== "rules" ? "live" : ""}`;
@@ -1067,7 +1073,7 @@ function connectEvents() {
       const when = data.at ? new Date(data.at).getTime() : Date.now();
       if (when < state.streamStartedAt - 1500) return;
       if (applyVisualCard(data.payload?.display)) {
-        toast("The visual itinerary card is ready.", { title: "MiniMax synthesis" });
+        toast("The visual itinerary card is ready.", { title: "Card synthesis" });
       }
     } catch {
       /* ignore malformed events */
@@ -1106,16 +1112,23 @@ async function uploadFrame(file) {
     const analysis = data.analysis || {};
     const provider = data.provider || {};
     const live = provider.live;
+    const providerName = provider.provider || "rules";
+    const providerLabel =
+      providerName === "bedrock"
+        ? "Bedrock"
+        : providerName === "minimax"
+          ? "MiniMax"
+          : "the vision provider";
     const text = analysis.description || analysis.location_guess || "A frame from the current scene.";
     addSystemTurn(
-      `Frame read${live ? " by MiniMax" : " by the deterministic vision fallback"}: ${text} Matched ${
+      `Frame read by ${live ? providerLabel : "the deterministic vision fallback"}: ${text} Matched ${
         data.scene?.show || "the scene"
       } · ${data.scene?.scene_title || ""}.`
     );
     toast(
       live
-        ? "MiniMax read the frame and matched the scene."
-        : "No MiniMax key set — the deterministic vision fallback matched the frame.",
+        ? `${providerLabel} read the frame and matched the scene.`
+        : "No vision provider is configured — the deterministic vision fallback matched the frame.",
       { title: "Frame analysis", bad: false }
     );
     setStatus(`Frame analyzed · ${data.scene?.show || "scene"}`, "ok");

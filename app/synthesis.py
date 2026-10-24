@@ -1,9 +1,9 @@
-"""MiniMax visual itinerary-card synthesis.
+"""Visual itinerary-card synthesis.
 
 The deterministic card is always available and is what the offline demo uses.
-When MiniMax is configured, the same plan is sent through a structured card
-prompt; the model may add editorial copy, a palette, chapter captions, and a
-hero-image prompt. The generated image is cached under /media/generated.
+When a vision provider is configured, the same plan is sent through a structured
+card prompt; the model may add editorial copy, a palette, chapter captions, and
+a hero-image prompt. The generated image is cached under /media/generated.
 """
 
 from __future__ import annotations
@@ -77,15 +77,16 @@ def fallback_visual_card(plan: dict[str, Any]) -> dict[str, Any]:
 
 
 async def synthesize_visual_card(plan: dict[str, Any]) -> dict[str, Any]:
-    """Return a visual card patch, using MiniMax when configured."""
+    """Return a visual card patch, using the active vision provider when configured."""
 
     card = fallback_visual_card(plan)
     if not settings.visual_enabled:
         return card
 
     prompt = build_card_prompt(plan)
+    vision = get_vision()
     try:
-        data = await get_vision().synthesize_itinerary_card(plan)
+        data = await vision.synthesize_itinerary_card(plan)
         patch = {key: data[key] for key in _ALLOWED_KEYS if data.get(key) not in (None, "", [])}
         if patch.get("palette") and not isinstance(patch["palette"], list):
             patch.pop("palette", None)
@@ -98,12 +99,13 @@ async def synthesize_visual_card(plan: dict[str, Any]) -> dict[str, Any]:
         card.update({key: value for key, value in patch.items() if key != "image_prompt"})
         image_prompt = patch.get("image_prompt") or card.get("image_prompt")
         if image_prompt:
-            image_url = await get_vision().generate_image(str(image_prompt))
+            image_url = await vision.generate_image(str(image_prompt))
             if image_url:
                 card["hero_image"] = image_url
+        meta = data.get("_meta") or {}
         card["generated_by"] = {
-            "provider": "minimax",
-            "model": settings.minimax_model,
+            "provider": meta.get("provider") or getattr(vision, "provider", "vision"),
+            "model": meta.get("model") or "unknown",
             "live": True,
             "error": None,
             "operation": prompt.operation,
@@ -116,7 +118,7 @@ async def synthesize_visual_card(plan: dict[str, Any]) -> dict[str, Any]:
             "error": str(exc)[:300],
         }
     except Exception as exc:  # noqa: BLE001 - visual polish is optional
-        logger.warning("MiniMax card synthesis failed: %s", exc)
+        logger.warning("Vision card synthesis failed: %s", exc)
         card["generated_by"] = {
             "provider": "rules",
             "model": "deterministic",

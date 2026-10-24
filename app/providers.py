@@ -4,6 +4,7 @@ DeepSeek is the reasoning layer: travel intent parsing, trip planning
 narrative, and refinement. MiniMax is the multimodal layer: reading a Fire TV
 frame, writing the culinary story, and generating destination art.
 
+Bedrock is preferred when enabled. These adapters are the optional fallbacks.
 Every call is optional. With no API keys the product still works end to end
 using the curated catalog and rule-based narration, which makes the demo
 resilient on stage and in CI.
@@ -650,10 +651,10 @@ async def analyze_frame_with_fallback(
     hint: str | None = None,
     image_meta: dict | None = None,
 ) -> dict:
-    minimax = get_vision()
+    vision = get_vision()
     if settings.visual_enabled:
         try:
-            data = await minimax.analyze_frame(image_data_url, candidates, image_meta)
+            data = await vision.analyze_frame(image_data_url, candidates, image_meta)
             data.setdefault("image", image_meta or {})
             return data
         except ProviderError:
@@ -678,8 +679,8 @@ def get_bedrock() -> Bedrock:
     return _bedrock
 
 
-def get_deepseek() -> DeepSeek | Bedrock:
-    """Return the active reasoning provider.
+def get_reasoner() -> DeepSeek | Bedrock:
+    """Return the active reasoning provider, preferring Bedrock.
 
     Bedrock wins when enabled; the DeepSeek adapter remains available as an
     explicit fallback for teams that set BEDROCK_MODE=off.
@@ -693,7 +694,7 @@ def get_deepseek() -> DeepSeek | Bedrock:
     return _deepseek
 
 
-def get_minimax() -> MiniMax | Bedrock:
+def get_vision() -> MiniMax | Bedrock:
     """Return the active vision/art provider, preferring Bedrock."""
 
     if settings.bedrock_enabled:
@@ -702,14 +703,6 @@ def get_minimax() -> MiniMax | Bedrock:
     if _minimax is None:
         _minimax = MiniMax()
     return _minimax
-
-
-def get_reasoner() -> DeepSeek | Bedrock:
-    return get_deepseek()
-
-
-def get_vision() -> MiniMax | Bedrock:
-    return get_minimax()
 
 
 def provider_status() -> dict:
@@ -740,9 +733,7 @@ def provider_status() -> dict:
         },
         "reasoner": settings.reasoner_name,
         "vision": settings.vision_name,
-        "simulator_agent": settings.reasoner_name
-        if settings.simulator_deepseek_enabled
-        else "rules",
+        "simulator_agent": settings.reasoner_name if settings.simulator_model_enabled else "rules",
     }
 
 

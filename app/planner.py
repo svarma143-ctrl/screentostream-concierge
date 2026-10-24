@@ -1,9 +1,10 @@
 """Trip planning, quotes, bookings, and the fast MCP hot path.
 
 The design goal is simple: catalog lookups and quote math must answer in a few
-milliseconds. DeepSeek writes the narrative in the background, and the result
-is cached under a plan key. A scene event can therefore pre-warm the exact plan
-a guest is likely to ask for, keeping the Alexa+ round trip under 500 ms.
+milliseconds. The reasoning provider writes the narrative in the background, and
+the result is cached under a plan key. A scene event can therefore pre-warm the
+exact plan a guest is likely to ask for, keeping the Alexa+ round trip under
+500 ms.
 """
 
 from __future__ import annotations
@@ -308,7 +309,7 @@ async def ensure_plan(trip_id: str, wait_ms: int | None = None) -> dict:
 
     event = _PLAN_EVENTS.setdefault(trip_id, asyncio.Event())
     if trip_id not in _INFLIGHT:
-        _INFLIGHT[trip_id] = _spawn(_deepseek_finish(trip_id, base, key))
+        _INFLIGHT[trip_id] = _spawn(_reasoning_finish(trip_id, base, key))
     budget = settings.planner_wait_ms if wait_ms is None else max(0, min(20_000, wait_ms))
     try:
         await asyncio.wait_for(event.wait(), timeout=budget / 1000)
@@ -321,7 +322,7 @@ async def ensure_plan(trip_id: str, wait_ms: int | None = None) -> dict:
     return result
 
 
-async def _deepseek_finish(trip_id: str, base: dict, key: str) -> None:
+async def _reasoning_finish(trip_id: str, base: dict, key: str) -> None:
     plan = dict(base)
     try:
         trip = get_trip_row(trip_id)
@@ -339,9 +340,9 @@ async def _deepseek_finish(trip_id: str, base: dict, key: str) -> None:
             trip["user_id"], "trip_ready", {"trip_id": trip_id, "title": plan.get("title")}
         )
         if settings.visual_enabled:
-            _spawn(_minimax_finish(trip_id, key))
+            _spawn(_vision_finish(trip_id, key))
     except Exception as exc:  # noqa: BLE001 - narrative must never strand a plan
-        logger.warning("DeepSeek narrative failed for %s: %s", trip_id, exc)
+        logger.warning("Reasoning narrative failed for %s: %s", trip_id, exc)
         plan = _refresh_visual(plan)
         plan["status"] = "ready"
         plan["generated_by"] = {
@@ -365,18 +366,18 @@ def _finish_plan_sync(trip_id: str, base: dict, key: str, provider: str) -> None
     plan["status"] = "ready"
     plan["generated_by"] = {
         "provider": provider,
-        "model": "deterministic" if provider == "rules" else settings.deepseek_model,
-        "live": provider == "deepseek",
+        "model": "deterministic" if provider == "rules" else settings.reasoner_name,
+        "live": provider not in {"rules", "manual"},
         "error": None,
     }
     plan["finished_at"] = utc_now()
     _PLAN_CACHE[key] = (time.time() + settings.cache_ttl_seconds, plan)
     update_trip(trip_id, status="ready", plan_json=json.dumps(plan))
     if settings.visual_enabled:
-        _spawn(_minimax_finish(trip_id, key))
+        _spawn(_vision_finish(trip_id, key))
 
 
-async def _minimax_finish(trip_id: str, key: str) -> None:
+async def _vision_finish(trip_id: str, key: str) -> None:
     """Polish an already-ready card without delaying the booking hot path."""
 
     try:
@@ -411,12 +412,12 @@ async def _minimax_finish(trip_id: str, key: str) -> None:
             {"trip_id": trip_id, "card": "itinerary", "payload": plan.get("display")},
         )
     except Exception as exc:  # noqa: BLE001 - visual polish is optional
-        logger.warning("MiniMax card polish failed for %s: %s", trip_id, exc)
+        logger.warning("Vision card polish failed for %s: %s", trip_id, exc)
 
 
 def _refresh_visual(plan: dict) -> dict:
     visual = plan.get("visual")
-    if not visual or (visual.get("generated_by") or {}).get("provider") != "minimax":
+    if not visual or not (visual.get("generated_by") or {}).get("live"):
         plan = apply_visual_card(plan, fallback_visual_card(plan))
     plan["display"] = _trip_display(plan)
     return plan
@@ -1303,7 +1304,7 @@ async def prefetch_for_scene(user_id: str, scene: dict) -> None:
     This is the trick that keeps the eventual voice turn fast: the likely
     request ("book a weekend here next spring") is already planned and cached.
     """
-    if not settings.prefetch_on_scene or not settings.deepseek_enabled:
+    if not settings.prefetch_on_scene or not settings.reasoning_enabled:
         return
     destination = scene.get("destination") or {}
     destination_id = destination.get("id")
@@ -1345,5 +1346,5 @@ async def prefetch_for_scene(user_id: str, scene: dict) -> None:
         plan["finished_at"] = utc_now()
         _PLAN_CACHE[key] = (time.time() + settings.cache_ttl_seconds, plan)
     except Exception:
-        logger.debug("DeepSeek prefetch narrative failed", exc_info=True)
+        logger.debug("Reasoning prefetch narrative failed", exc_info=True)
         _PLAN_CACHE[key] = (time.time() + settings.cache_ttl_seconds, base)

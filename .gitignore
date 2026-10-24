@@ -25,3 +25,6 @@ build/
 .tmp/
 .DS_Store
 *.log
+
+# local demo render (upload to YouTube/Vimeo, do not commit)
+demo/*.mp4

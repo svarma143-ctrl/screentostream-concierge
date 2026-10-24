@@ -2,9 +2,9 @@
 
 **Project:** ScreenToStream Concierge  
 **Track:** Alexa+ MCP + AWS Builder Mini Challenge  
-**Status:** Bedrock adapter implemented and unit-tested with a mocked Bedrock Runtime; live AWS validation requires credentials and model access in the judging account.
+**Status:** Bedrock adapter and agentic tool loop implemented and unit-tested with a mocked Bedrock Runtime; live AWS validation requires credentials and model access in the judging account.
 
-**Companion documents:** [Submission checklist](SUBMISSION_CHECKLIST.md) · [AWS account setup guide](AWS_ACCOUNT_SETUP.md) · [Bedrock operator guide](AWS_BEDROCK.md) · [Open Source Friction Log](FRICTION_LOG.md) · [Alexa+ integration guide](ALEXA_PLUS.md) · [Docker verification log](DOCKER_VERIFICATION.md)
+**Companion documents:** [Submission checklist](SUBMISSION_CHECKLIST.md) · [AWS account setup guide](AWS_ACCOUNT_SETUP.md) · [Bedrock operator guide](AWS_BEDROCK.md) · [Guided friction log](FRICTION_LOG_V2.md) · [Detailed engineering log](FRICTION_LOG.md) · [Alexa+ integration guide](ALEXA_PLUS.md) · [Docker verification log](DOCKER_VERIFICATION.md)
 
 ---
 
@@ -15,15 +15,18 @@ bookable travel and culinary plan. Alexa+ reaches the service through a
 self-hosted, OAuth-protected MCP server. The AWS integration is intentionally
 placed **behind the provider adapter layer**, not in the MCP transport.
 
-The design has three properties that matter for judging:
+The design has four properties that matter for judging:
 
 1. **Protocol integrity.** The only MCP entry point is the flat
    `/mcp` Streamable HTTP endpoint. JSON-RPC, `initialize`, session state,
    OAuth, and all 14 tools stay untouched.
-2. **AWS-native AI.** Amazon Bedrock Runtime supplies reasoning, structured
+2. **Agentic AWS orchestration.** Bedrock Converse chooses MCP tools,
+   the simulator executes them through `/mcp`, and the results drive the next
+   model turn. This is a multi-round tool-use loop, not a single prompt.
+3. **AWS-native AI.** Amazon Bedrock Runtime supplies reasoning, structured
    intent extraction, multimodal frame understanding, editorial card copy, and
    generated hero imagery.
-3. **Graceful degradation.** Every Bedrock call has a deterministic fallback.
+4. **Graceful degradation.** Every Bedrock call has a deterministic fallback.
    The demo, tests, and booking flow still work without AWS credentials.
 
 ---
@@ -32,19 +35,21 @@ The design has three properties that matter for judging:
 
 | Capability | AWS service / API | Model | Fallback |
 |---|---|---|---|
-| Structured intent | Bedrock Runtime Converse | Claude 3.5 Sonnet | Deterministic rules parser |
-| Narrative / refinement | Bedrock Runtime Converse | Claude 3.5 Sonnet | Curated catalog copy |
-| Simulator tool loop | Bedrock Runtime Converse tool use | Claude 3.5 Sonnet | Deterministic rules router |
-| Frame understanding | Bedrock Runtime Converse image block | Claude 3.5 Sonnet | Scene matcher + prompt hints |
-| Card copy | Bedrock Runtime Converse | Claude 3.5 Sonnet | Deterministic visual card |
-| Hero artwork | Bedrock Runtime InvokeModel | Titan Image Generator / Nova Canvas | Existing SVG destination art |
+| Structured intent | Bedrock Runtime Converse | Claude Sonnet 4.6 | Deterministic rules parser |
+| Narrative / refinement | Bedrock Runtime Converse | Claude Sonnet 4.6 | Curated catalog copy |
+| Agentic tool loop | Bedrock Runtime Converse tool use | Claude Sonnet 4.6 | Deterministic rules router |
+| Frame understanding | Bedrock Runtime Converse image block | Claude Sonnet 4.6 | Scene matcher + prompt hints |
+| Card copy | Bedrock Runtime Converse | Claude Sonnet 4.6 | Deterministic visual card |
+| Hero artwork | Bedrock Runtime InvokeModel | Nova Canvas / Titan Image Generator | Existing SVG destination art |
 
 The integration is implemented in:
 
 - `app/aws_bedrock.py` — Bedrock Runtime adapter, message/tool translation,
   image blocks, image generation, caching.
-- `app/providers.py` — provider factory; Bedrock wins when enabled, then
-  DeepSeek/MiniMax, then deterministic rules.
+- `app/simulator.py` — the agent loop that executes model-selected MCP tools
+  through the real `/mcp` endpoint and feeds results back to Converse.
+- `app/providers.py` — provider factory; Bedrock wins when enabled, then the
+  optional DeepSeek/MiniMax adapters, then deterministic rules.
 - `app/config.py` — `BEDROCK_MODE`, region, model IDs, image dimensions.
 - `app/planner.py`, `app/simulator.py`, `app/synthesis.py` — unchanged call
   sites through the shared provider interface.
@@ -66,8 +71,8 @@ flowchart LR
     PROVIDERS -->|BEDROCK_MODE=live| BEDROCK["Amazon Bedrock Runtime"]
     PROVIDERS -->|fallback| DS["DeepSeek / MiniMax"]
     PROVIDERS -->|always available| RULES["Deterministic rules"]
-    BEDROCK --> CLAUDE["Claude 3.5 Sonnet<br/>Converse"]
-    BEDROCK --> IMAGE["Titan / Nova Canvas<br/>InvokeModel"]
+    BEDROCK --> CLAUDE["Claude Sonnet 4.6<br/>Converse"]
+    BEDROCK --> IMAGE["Nova Canvas / Titan<br/>InvokeModel"]
     PLANNER --> EVENTS["SSE event bus"]
     EVENTS --> TV
     EVENTS --> Web
@@ -134,6 +139,41 @@ operations. Narrative and art are background work.
    `runtime/generated/` and served from `/media/generated/...`.
 4. The plan is updated and `trip_card_ready` / `tv_card` events are published.
 5. If generation fails, the existing deterministic card remains valid.
+
+### 4.5 Agentic tool-use loop
+
+The AWS path is a multi-round agent loop, not a single Converse prompt.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant S as Simulator agent
+    participant B as Bedrock Converse
+    participant M as /mcp
+    participant T as MCP tool
+
+    U->>S: "Book a weekend here next spring."
+    S->>M: tools/list (14 tools)
+    S->>B: messages + toolSpecs
+    B-->>S: toolUse(get_viewing_context)
+    S->>M: tools/call
+    M->>T: get_viewing_context
+    T-->>M: structured result
+    M-->>S: toolResult
+    S->>B: messages + toolUse + toolResult
+    B-->>S: toolUse(plan_trip)
+    S->>M: tools/call
+    M-->>S: planning state
+    S->>B: poll result
+    B-->>S: final text or another tool call
+    S-->>U: spoken reply + display card
+```
+
+The loop lives in `_SessionRunner.run_agent()` (`app/simulator.py`) and is
+bounded by `SIMULATOR_MAX_TOOL_ROUNDS` (default 6). The adapter translates
+`toolSpec` / `toolUse` / `toolResult` in `app/aws_bedrock.py`. The tool calls
+execute through the real OAuth-protected MCP endpoint, not inside the model
+adapter. Full design: **[AWS_AGENTIC_LOOP.md](AWS_AGENTIC_LOOP.md)**.
 
 ---
 
@@ -269,6 +309,7 @@ and model access exist.
 - Converse structured intent parsing and provider metadata;
 - OpenAI tool schema → Bedrock `toolSpec` translation;
 - assistant `tool_calls` → `toolUse` and role-`tool` → `toolResult`;
+- a loop-level test that executes an MCP tool and feeds the result into the next Converse turn;
 - frame data URL → Converse image block;
 - Titan/Nova image response caching;
 - provider factory/status preference for Bedrock.
@@ -337,9 +378,10 @@ first push to the public repository.
 |---|---|
 | AWS service used | Amazon Bedrock Runtime via `boto3` |
 | Code integration | `app/aws_bedrock.py`; provider factory in `app/providers.py` |
-| Text model | Claude 3.5 Sonnet through Converse |
+| Text model | Claude Sonnet 4.6 through Converse |
+| Agentic orchestration | `_SessionRunner.run_agent()` executes model-selected MCP tools through `/mcp` and feeds `toolResult` blocks back for up to six rounds |
 | Vision | Claude multimodal image blocks |
-| Image generation | Titan Image Generator / Nova Canvas through InvokeModel |
+| Image generation | Nova Canvas / Titan Image Generator through InvokeModel |
 | Protocol preserved | `/mcp` JSON-RPC + Streamable HTTP + OAuth unchanged |
 | Testability | `tests/test_bedrock.py` with fake Bedrock Runtime; no credentials required |
 | Fallback | deterministic rules, catalog, and visual cards |
@@ -354,9 +396,13 @@ is not part of this design.
 
 - No live AWS account was available in the build environment; the adapter is
   tested with a mocked Bedrock Runtime client, not a real Claude inference.
+- This is a **single-service Bedrock integration** with an agentic tool loop.
+  It does not use AgentCore, Strands, SageMaker, or a deployed AWS runtime.
 - Claude model IDs and cross-region inference profiles vary by account and
-  region. Use the exact ID shown in the Bedrock console.
-- Titan v1 renders 1024×1024; use Nova Canvas for 1280×720 hero art.
+  region. The default is `global.anthropic.claude-sonnet-4-6`; use the exact ID
+  shown in the Bedrock console if your account differs.
+- Nova Canvas renders 1280×720 hero art; Titan v1 remains supported at
+  1024×1024.
 - SQLite and local media are single-instance conveniences, not a production
   multi-AZ data layer.
 - The app builds and passes its container health/MCP checks, but has not been deployed to ECS/Fargate here.

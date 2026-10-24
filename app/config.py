@@ -13,7 +13,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_SCOPES = (
@@ -74,6 +74,14 @@ class Settings(BaseSettings):
     # Set SECRET_KEY to a long random value in production. Locally, a stable
     # key is kept in runtime/dev-secret.key so the demo survives restarts.
     secret_key: str = Field(default_factory=_dev_secret_key)
+
+    @field_validator("secret_key", mode="before")
+    @classmethod
+    def _blank_secret_key_uses_dev_key(cls, value: object) -> object:
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return _dev_secret_key()
+        return value
+
     access_token_ttl_seconds: int = 3600
     refresh_token_ttl_seconds: int = 60 * 60 * 24 * 30
     auth_code_ttl_seconds: int = 300
@@ -108,9 +116,12 @@ class Settings(BaseSettings):
     # Optional short-term Bedrock API key. boto3 consumes this through
     # AWS_BEARER_TOKEN_BEDROCK; the adapter exports it before client creation.
     aws_bearer_token_bedrock: str = ""
-    bedrock_text_model_id: str = "anthropic.claude-3-5-sonnet-20241022-v2:0"
-    bedrock_vision_model_id: str = "anthropic.claude-3-5-sonnet-20241022-v2:0"
-    bedrock_image_model_id: str = "amazon.titan-image-generator-v1"
+    # Current Claude Sonnet 4.6 global inference profile. Override with the
+    # exact model or profile ID enabled in your account and region.
+    bedrock_text_model_id: str = "global.anthropic.claude-sonnet-4-6"
+    bedrock_vision_model_id: str = "global.anthropic.claude-sonnet-4-6"
+    # Nova Canvas is the current 16:9 image model. Titan v1 remains supported.
+    bedrock_image_model_id: str = "amazon.nova-canvas-v1:0"
     bedrock_image_quality: Literal["standard", "premium"] = "standard"
     # 0 means choose dimensions from the selected image model.
     bedrock_image_width: int = 0
@@ -208,7 +219,7 @@ class Settings(BaseSettings):
         return "minimax" if self.minimax_enabled else "rules"
 
     @property
-    def simulator_deepseek_enabled(self) -> bool:
+    def simulator_model_enabled(self) -> bool:
         if self.simulator_agent == "rules":
             return False
         return self.reasoning_enabled

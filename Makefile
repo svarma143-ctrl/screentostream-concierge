@@ -1,7 +1,7 @@
 UV ?= uv
 PORT ?= 8000
 
-.PHONY: install env run dev test lint format-check format check smoke smoke-full bedrock-check docker-build docker-up docker-down reset clean
+.PHONY: install env demo run dev test lint format-check format check smoke smoke-full bedrock-check docker-build docker-up docker-down reset clean
 
 install:
 	$(UV) sync --all-groups
@@ -9,6 +9,9 @@ install:
 env:
 	@test -f .env || cp .env.example .env
 	@echo "Wrote .env from .env.example (edit PUBLIC_BASE_URL for a tunnel)."
+
+demo: env install
+	$(UV) run uvicorn app.main:app --host 127.0.0.1 --port $(PORT)
 
 run:
 	$(UV) run uvicorn app.main:app --host 0.0.0.0 --port $(PORT)

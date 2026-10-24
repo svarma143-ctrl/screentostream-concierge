@@ -2,7 +2,7 @@
 
 This is the honest “what we hit” note from building ScreenToStream Concierge for the Alexa+ MCP track. It is written for the Alexa+ platform team as much as for future hackathon teams.
 
-For the submission-ready version, see the **[Open Source Friction Log](FRICTION_LOG.md)**. It adds AWS Bedrock model-access, `boto3` async, Converse tool-use, image-model, and credential-free testing friction.
+For the submission-ready version, see the **[guided friction log](FRICTION_LOG_V2.md)**. The **[detailed engineering log](FRICTION_LOG.md)** keeps the full F-01 through F-13 write-ups. Together they add AWS Bedrock model-access, `boto3` async, Converse tool-use, image-model, and credential-free testing friction.
 
 **What we built:** a self-hosted Remote MCP server (FastAPI + FastMCP) that turns a Fire TV scene into a planned, quoted, and booked weekend, plus a browser client that exercises the real OAuth and MCP endpoints.
 
@@ -154,7 +154,8 @@ On observability: a standard way to attach a request/trace ID across the voice t
 - **Static media and MCP sharing one origin** is convenient, but if a proxy buffers responses, Streamable HTTP SSE breaks. Document “disable buffering” for tunnels and reverse proxies.
 - **Docker health checks** should hit an endpoint that does not require OAuth; `/api/health` is a good convention to recommend.
 - **Scope naming** would benefit from a platform convention (`media.read`, `booking.write`, etc.). Ours are clear, but every server invents its own vocabulary.
-- **Bedrock model IDs are not portable across regions and accounts.** Claude model access can require a cross-region inference profile (`us.anthropic...`) rather than the direct foundation-model ID. Surface the usable ID next to the model-access toggle; a copy button would remove a common first-run failure.
+- **Bedrock model IDs are not portable across regions and accounts.** Claude model access can require a cross-region inference profile (`global.anthropic...` or `us.anthropic...`) rather than the direct foundation-model ID. Surface the usable ID next to the model-access toggle; a copy button would remove a common first-run failure.
+- **Converse tool use needs a canonical MCP translation example.** The API is clean once it works, but OpenAI-style `tool_calls` and Bedrock `toolUse` / `toolResult` blocks have different shapes and ordering rules. A reference loop that preserves tool-use IDs and feeds results back across multiple turns would save every MCP builder the same adapter work.
 
 ---
 

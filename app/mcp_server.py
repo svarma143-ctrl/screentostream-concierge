@@ -517,8 +517,8 @@ async def get_booking(booking_id: str | None = None, trip_id: str | None = None)
     name="get_dish_story",
     description=(
         "Tell the story of the dish in the current scene: origin, flavor notes, a practical recipe, a pairing, and "
-        "the local place to eat it. Use when the guest asks 'what is that?' or 'how do I make it?'. Uses MiniMax "
-        "for culinary writing when configured. Read-only."
+        "the local place to eat it. Use when the guest asks 'what is that?' or 'how do I make it?'. Uses the "
+        "configured vision provider for culinary writing when available. Read-only."
     ),
     annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=False),
 )

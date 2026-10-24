@@ -1,6 +1,6 @@
 # Alexa+ onboarding prep
 
-Status: **2026-10-21**. This is the submission and onboarding guide for the
+Status: **2026-10-22**. This is the submission and onboarding guide for the
 Alexa+ track. It separates what the hackathon actually requires from what only
 matters if you have Alexa+ Preview console access.
 
@@ -46,6 +46,35 @@ not have.
 | Docker and CI | Image build, health check, GitHub Actions |
 
 Full operator contract: [`docs/ALEXA_PLUS.md`](ALEXA_PLUS.md).
+
+---
+
+## Optional: Alexa Skill MCP bridge (not used)
+
+There is a community project,
+[`alexa-skill-mcp-bridge`](https://github.com/KayLerch/alexa-skill-mcp-bridge),
+that puts an Alexa Skill in front of an MCP server so it can be tested on a
+physical Alexa device before Alexa+ add-on tooling is generally available. The
+skill stands in for an add-on, and a Strands agent on Bedrock AgentCore Runtime
+emulates the Alexa+ orchestrator. Its own README is explicit that it reproduces
+the mechanics of an Alexa+ MCP client, not Alexa's model judgment.
+
+We did **not** add it to this submission because:
+
+- It still requires live AWS/Bedrock access and, for the device path, an Amazon
+  developer account, ASK CLI, a public server URL, and an AgentCore/CDK
+  deployment.
+- Its auth path uses a configured token/secret, while our key evidence is the
+  OAuth 2.1 + PKCE, PRM/AS metadata, `resource`, and bare `401` contract.
+- It would add a second, emulated integration path without changing the
+  submitted self-hosted MCP add-on.
+- The remaining time is better spent on the public video URL and the Devpost
+  submission.
+
+It would be a reasonable future extension if we had an Echo device, AWS model
+access, and time to test the bridge's elicitation and token path against this
+server. It is not required for the Alexa+ track and is not part of the current
+demo.
 
 ---
 
@@ -191,7 +220,7 @@ client at the server. The local simulator and smoke test do not need one.
 - [x] Judge path works without credentials
 - [ ] Optional: stable named tunnel for judging
 - [ ] Optional: actual Alexa+ Preview console registration
-- [ ] Record the demo
+- [x] Record the demo
 - [ ] Paste the repository and demo URLs into Devpost
 - [ ] Submit before **2026-10-23 12:00 PM PDT**
 

@@ -1,15 +1,56 @@
 # Demo recording plan
 
-Target length: **2:45**. Hard limit: **3:00**. Public on YouTube or Vimeo,
-English audio or captions.
+Current submission render: **1:28**. Hard limit: **3:00**. Public on YouTube or
+Vimeo, English audio or captions.
 
 The demo must show the product working. The deterministic path is the primary
 demo because it needs no credentials. Show the Bedrock integration as code and
 tests unless live AWS is working on recording day.
 
+## Current render
+
+- Primary cut: `demo/screentostream-concierge-demo-andrew-agentic.mp4` — Andrew
+  voice, updated agentic AWS segment, 1:28
+- Preserved alternates: `demo/screentostream-concierge-demo.mp4` (Ava) and
+  `demo/screentostream-concierge-demo-andrew.mp4` (previous Andrew cut)
+- Captions: `demo/screentostream-concierge-demo-agentic.srt`
+- Video: 1920×1080, 25 fps, H.264/AAC, 1:27.8, −16 LUFS
+- Voice: neural TTS, −4% rate, −1 Hz pitch (`en-US-AndrewNeural`)
+- Capture: Playwright page recording (no screen-recording permission needed)
+- Flow: real OAuth 2.1 + PKCE → plan → refine → quote → book → TV overlay → MCP contract page
+- AWS: Bedrock Converse tool-use loop slide with the tool-loop code path, a
+  passing adapter/loop test, the live gate, and an explicit deterministic
+  fallback; no fake live AWS call
+
+### Timeline
+
+| Time | Scene | Narration |
+|---|---|---|
+| 0:00 | Title card | “This is ScreenToStream Concierge. It turns the show you're watching into a bookable weekend.” |
+| 0:06 | OAuth consent + linked state | “The simulator is a real MCP client. It completes OAuth 2.1 with PKCE before calling Alexa Plus.” |
+| 0:15 | Play the scene → Kyoto plan card | “Book a weekend stay here next spring. The server resolves Kyoto, builds a two-night stay, and sends a card to the TV.” |
+| 0:24 | Refine to cheaper / food-focused | “The guest can refine in natural language. Pricing stays deterministic, so the quote is instant.” |
+| 0:32 | Quote card | “The quote is held, then confirmed. The server creates a simulated booking and exports a calendar file.” |
+| 0:39 | Booking + send to TV | “After confirmation, it creates a simulated booking, sends the itinerary back to the TV, and exports a calendar file.” |
+| 0:51 | TV overlay | “The card lands back on the TV.” |
+| 0:54 | `/docs/alexa-plus` contract page | “Under the hood: MCP, Streamable HTTP, fourteen tools, OAuth discovery, and the bare 401 Alexa Plus expects.” |
+| 1:04 | AWS Builder slide | “Bedrock's Converse tool loop is the agent: it picks one of fourteen MCP tools, calls the MCP endpoint, and feeds the result back until the trip is planned. The adapter test passes; `make bedrock-check` is the live gate. This render uses the deterministic fallback.” |
+| 1:22 | Close card | “The show ends. The trip begins. ScreenToStream Concierge.” |
+
+The older shot list below is retained as a longer-form option if the video is
+re-recorded with live Bedrock or Alexa+ console footage.
+
 ---
 
 ## Before recording
+
+Fastest path:
+
+```bash
+make demo
+```
+
+Manual path:
 
 ```bash
 cp .env.example .env
@@ -109,22 +150,24 @@ contract.”
 
 **Action:** show the smoke test passing and the tool count.
 
-### 2:20–2:40 — AWS Bedrock
+### 2:20–2:40 — AWS Bedrock agentic loop
 
-**On screen:** `app/aws_bedrock.py` and a passing mocked test:
+**On screen:** `app/simulator.py`, `app/aws_bedrock.py`, and a passing adapter
+and loop test:
 
 ```bash
 uv run pytest tests/test_bedrock.py -q
 ```
 
-**Voiceover:** “For the AWS Builder mini challenge, Amazon Bedrock Runtime is
-the preferred provider: Converse for intent, narrative, vision, and tool use,
-and Titan or Nova for card art. Without AWS credentials, the deterministic
-provider keeps the product working. `make bedrock-check` is the live gate.”
+**Voiceover:** “Bedrock's Converse tool loop is the agent: it picks one of
+fourteen MCP tools, calls the MCP endpoint, and feeds the result back until the
+trip is planned. The adapter test passes; `make bedrock-check` is the live gate.
+This render uses the deterministic fallback.”
 
 **Honesty note:** if live AWS is not available on recording day, say: “This
-recording uses the deterministic fallback; the Bedrock adapter is implemented
-and tested, and the live gate is documented.” Do not fake a live AWS call.
+recording uses the deterministic fallback; the Bedrock adapter and agent loop
+are implemented and tested, and the live gate is documented.” Do not fake a
+live AWS call.
 
 ### 2:40–2:45 — Close
 
@@ -171,4 +214,9 @@ Suggested description:
 > mini challenge. Self-hosted MCP 2025-11-25 over Streamable HTTP, OAuth 2.1 +
 > PKCE, 14 tools, and a browser simulator that is a real MCP client.
 >
+> Under AWS, a Bedrock Converse tool-use loop chooses and executes those MCP
+> tools, with a deterministic fallback for credential-free evaluation.
+>
 > Code: https://github.com/svarma143-ctrl/screentostream-concierge
+> Run locally: `make demo` → http://127.0.0.1:8000. No account, API key, or
+> email required.
