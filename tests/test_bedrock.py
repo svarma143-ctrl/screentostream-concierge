@@ -249,7 +249,7 @@ def test_bedrock_image_generation_caches_asset(monkeypatch, tmp_path):
     url = asyncio.run(engine.generate_image("Kyoto at dusk", aspect_ratio="16:9"))
 
     assert url.startswith("/media/generated/")
-    assert (tmp_path / "generated" / url.rsplit("/", 1)[-1]).read_bytes() == PNG_1PX
+    assert (tmp_path / "media" / "generated" / url.rsplit("/", 1)[-1]).read_bytes() == PNG_1PX
     body = json.loads(fake.calls[0]["body"])
     assert body["imageGenerationConfig"]["width"] == 1280
     assert body["imageGenerationConfig"]["height"] == 720

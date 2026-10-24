@@ -1,5 +1,11 @@
 # Docker verification log
 
+> **Note:** this log records the original 2026-10-21 image build. The current
+> Dockerfile installs from `uv.lock`, runs as UID `10001`, and is verified by
+> `.github/workflows/docker-check.yml` (Hadolint, build, non-root check, and
+> `/api/health`). Re-run the commands below only against the current image if
+> you need a fresh local transcript.
+
 **Date:** 2026-10-21  
 **Host:** macOS 15.3, Apple Silicon (arm64)  
 **Runtime:** Lima 2.2.1 with its `docker` template (Docker 29.9.2, rootless)

@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest a protocol, product, or operational improvement.
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard to do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Keep the flat /mcp contract and demo fallback in mind.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints
+      options:
+        - label: This keeps MCP 2025-11-25+ over Streamable HTTP and OAuth 2.1 + PKCE S256.
+        - label: This does not add a custom tool-execution endpoint.
+        - label: This keeps the credential-free deterministic fallback working.

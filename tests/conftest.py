@@ -26,6 +26,10 @@ os.environ.update(
         "SIMULATOR_AGENT": "rules",
         "DEEPSEEK_API_KEY": "",
         "MINIMAX_API_KEY": "",
+        "DEMO_RATE_LIMIT_PER_MINUTE": "10000",
+        "ACCESS_LOG_ENABLED": "false",
+        "DEMO_AUTH_USERNAME": "",
+        "DEMO_AUTH_PASSWORD": "",
     }
 )
 

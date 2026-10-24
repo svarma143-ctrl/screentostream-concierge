@@ -1,7 +1,7 @@
 UV ?= uv
 PORT ?= 8000
 
-.PHONY: install env demo run dev test lint format-check format check smoke smoke-full bedrock-check docker-build docker-up docker-down reset clean
+.PHONY: install env demo run dev test ui-install ui-test lint format-check format check smoke smoke-full bedrock-check docker-build docker-up docker-down reset clean
 
 install:
 	$(UV) sync --all-groups
@@ -21,6 +21,12 @@ dev:
 
 test:
 	$(UV) run pytest -q
+
+ui-install:
+	$(UV) run playwright install chromium
+
+ui-test:
+	$(UV) run pytest -q -m ui
 
 lint:
 	$(UV) run ruff check app tests scripts

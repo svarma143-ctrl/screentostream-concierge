@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import re
 import secrets
 import sqlite3
 import time
@@ -16,16 +17,22 @@ from urllib.parse import urlencode
 import httpx
 import jwt
 from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingResponse
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    Response,
+    StreamingResponse,
+)
 from pydantic import BaseModel, Field
 
 from . import agent_context, catalog, planner
-from .auth import oauth_debug_state
+from .auth import OAuthError, authenticate_bearer, oauth_debug_state
 from .config import settings
 from .db import execute, fetch_one
 from .events import stream
 from .intents import TRAVEL_INTENT_SCHEMA, agent_matrix
-from .media import image_info
+from .media import image_info, sign_frame_url, verify_frame_signature
 from .providers import (
     analyze_frame_with_fallback,
     provider_status,
@@ -171,20 +178,14 @@ async def link_status(request: Request) -> dict:
     if not token:
         return {"linked": False}
     try:
-        payload = jwt.decode(
-            token,
-            settings.secret_key,
-            algorithms=["HS256"],
-            audience=settings.resource_url,
-            issuer=settings.issuer,
-        )
-        return {
-            "linked": True,
-            "user_id": payload.get("sub"),
-            "client_id": payload.get("client_id"),
-        }
-    except jwt.PyJWTError:
+        principal = authenticate_bearer(f"Bearer {token}")
+    except OAuthError:
         return {"linked": False}
+    return {
+        "linked": True,
+        "user_id": principal.user_id,
+        "client_id": principal.client_id,
+    }
 
 
 @router.get("/api/demo/oauth-url")
@@ -349,6 +350,30 @@ async def start_viewing(body: ViewingStart) -> dict:
     }
 
 
+@router.get("/media/frames/{name}", include_in_schema=False)
+async def serve_frame(
+    name: str,
+    exp: int | None = None,
+    sig: str | None = None,
+) -> FileResponse:
+    """Serve an uploaded frame only through a short-lived signed URL."""
+    if not re.fullmatch(r"[a-f0-9]{20}\.(?:jpg|png|webp|gif)", name):
+        raise HTTPException(status_code=404, detail="Frame not found.")
+    path = f"/media/frames/{name}"
+    if exp is None or not sig or not verify_frame_signature(path, exp, sig):
+        raise HTTPException(status_code=403, detail="This frame link is invalid or expired.")
+    target = (Path(settings.runtime_dir) / "frames" / name).resolve()
+    if not target.is_file():
+        raise HTTPException(status_code=404, detail="Frame not found.")
+    return FileResponse(
+        target,
+        headers={
+            "Cache-Control": "private, max-age=300",
+            "Content-Disposition": "inline",
+        },
+    )
+
+
 @router.post("/api/viewing/frame")
 async def analyze_frame(
     file: Annotated[UploadFile, File()],
@@ -427,7 +452,8 @@ async def analyze_frame(
         "analysis": analysis,
         "provider": (analysis.get("_meta") or {}),
         "reason": reason,
-        "frame_url": f"/media/frames/{name}",
+        "frame_url": sign_frame_url(f"/media/frames/{name}"),
+        "frame_expires_in": settings.frame_url_ttl_seconds,
         "image": image,
     }
 
@@ -637,6 +663,8 @@ async def health() -> dict:
         "status": "ok" if db_ok else "degraded",
         "app": settings.app_name,
         "version": settings.app_version,
+        "environment": settings.environment,
+        "demo_mode": settings.demo_mode,
         "database": "ok" if db_ok else "error",
         "mcp": {
             "path": "/mcp",

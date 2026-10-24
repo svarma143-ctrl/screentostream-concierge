@@ -14,6 +14,9 @@ __pycache__
 .git
 .DS_Store
 *.log
+tests
+test-results
+playwright-report
 
 # Local-only submission assets and session exports.
 demo

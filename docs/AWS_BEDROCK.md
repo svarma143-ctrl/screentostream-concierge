@@ -279,7 +279,7 @@ bytes with the correct `png`, `jpeg`, `gif`, or `webp` format. The existing
 `app/media.py` metadata (dimensions, orientation, aspect ratio) is included in
 the prompt.
 
-Generated art is cached under `runtime/generated/` and served from
+Generated art is cached under `runtime/media/generated/` and served from
 `/media/generated/...`. The plan is served immediately with a deterministic
 card; Bedrock copy and hero art are optional background polish.
 

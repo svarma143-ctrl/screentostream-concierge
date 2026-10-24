@@ -6,7 +6,42 @@ orientation, and a safe aspect-ratio for the model prompt and UI metadata.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import time
 from typing import Any
+
+from .config import settings
+
+FRAME_PREFIX = "/media/frames/"
+
+
+def sign_frame_url(path: str, *, ttl: int | None = None) -> str:
+    """Return a short-lived, HMAC-signed URL for an uploaded frame.
+
+    Frames are user uploads, so they must not be served by the public static
+    mount. The signature is a capability: only a caller that received the URL
+    from an authenticated API response can fetch the bytes.
+    """
+    if not path.startswith(FRAME_PREFIX):
+        raise ValueError("Only /media/frames/ paths can be signed.")
+    expires = int(time.time()) + (ttl if ttl is not None else settings.frame_url_ttl_seconds)
+    signature = _frame_signature(path, expires)
+    return f"{path}?exp={expires}&sig={signature}"
+
+
+def verify_frame_signature(path: str, expires: int, signature: str) -> bool:
+    if expires < int(time.time()):
+        return False
+    return any(
+        hmac.compare_digest(_frame_signature(path, expires, key=key), signature)
+        for key in settings.signing_keys
+    )
+
+
+def _frame_signature(path: str, expires: int, *, key: str | None = None) -> str:
+    message = f"s2s-frame:{path}:{expires}".encode()
+    return hmac.new((key or settings.secret_key).encode(), message, hashlib.sha256).hexdigest()
 
 
 def image_info(data: bytes, content_type: str | None = None) -> dict[str, Any]:

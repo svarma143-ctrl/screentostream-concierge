@@ -25,6 +25,8 @@ build/
 .tmp/
 .DS_Store
 *.log
+test-results/
+playwright-report/
 
 # local demo render (upload to YouTube/Vimeo, do not commit)
 demo/*.mp4

@@ -23,7 +23,8 @@ The server is a Remote MCP server, self-hosted behind FastAPI, that speaks **MCP
 | Authorization Server Metadata | `https://<your-host>/.well-known/oauth-authorization-server` |
 | Authorization endpoint | `https://<your-host>/oauth/authorize` |
 | Token endpoint | `https://<your-host>/oauth/token` |
-| Client authentication | Public client, `token_endpoint_auth_methods_supported: ["none"]` |
+| Revocation endpoint | `https://<your-host>/oauth/revoke` |
+| Client authentication | Public client by default, `token_endpoint_auth_methods_supported: ["none"]`; confidential clients can opt into `client_secret_basic` / `client_secret_post` |
 | PKCE | `S256` only |
 | Resource indicator | `https://<your-host>/mcp` |
 | Token | JWT Bearer in `Authorization` |
@@ -179,10 +180,12 @@ Alexa+                         Concierge
   "issuer": "https://<your-host>",
   "authorization_endpoint": "https://<your-host>/oauth/authorize",
   "token_endpoint": "https://<your-host>/oauth/token",
+  "revocation_endpoint": "https://<your-host>/oauth/revoke",
   "scopes_supported": ["concierge.read", "concierge.book", "profile.read", "profile.write"],
   "response_types_supported": ["code"],
   "grant_types_supported": ["authorization_code", "refresh_token"],
   "token_endpoint_auth_methods_supported": ["none"],
+  "revocation_endpoint_auth_methods_supported": ["none"],
   "code_challenge_methods_supported": ["S256"],
   "resource_parameter_supported": true,
   "authorization_response_iss_parameter_supported": true,

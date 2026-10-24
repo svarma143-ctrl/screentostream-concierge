@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in the MCP server, simulator, or docs is broken.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste bearer tokens, `.env` contents, AWS credentials, or personal data.
+        For a security issue, use the private advisory link in SECURITY.md instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Include the endpoint, tool name, or page involved.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Commands, request bodies, or UI clicks. Redact secrets.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit or version
+      placeholder: e.g. v0.1.0 or a commit SHA
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Local (make demo)
+        - Docker
+        - Cloudflare tunnel
+        - Other
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste the JSON access line or traceback, with secrets removed.
+      render: text

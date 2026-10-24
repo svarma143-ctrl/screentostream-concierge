@@ -7,6 +7,7 @@ initialised (a subtle failure that shows up as a 500 on the first MCP request).
 
 from __future__ import annotations
 
+import logging
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -15,6 +16,7 @@ from urllib.parse import urlparse
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .api import ensure_demo_viewing
 from .api import router as api_router
@@ -23,12 +25,21 @@ from .auth import router as auth_router
 from .config import settings
 from .db import ensure_storage
 from .mcp_server import mcp
+from .security import (
+    DemoGuardMiddleware,
+    RateLimitMiddleware,
+    RequestContextMiddleware,
+)
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
 RUNTIME_DIR = Path(settings.runtime_dir)
+MEDIA_DIR = RUNTIME_DIR / "media"
 RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
 (RUNTIME_DIR / "frames").mkdir(parents=True, exist_ok=True)
-(RUNTIME_DIR / "media").mkdir(parents=True, exist_ok=True)
+MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+
+if settings.access_log_enabled:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 _public_host = urlparse(settings.base_url).hostname or "127.0.0.1"
 _allowed_hosts = list(
@@ -39,6 +50,7 @@ _allowed_hosts = list(
             "localhost",
             "testserver",
             "0.0.0.0",
+            *[item.strip() for item in settings.allowed_hosts.split(",") if item.strip()],
         ]
     )
 )
@@ -64,7 +76,8 @@ mcp_app = mcp.http_app(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ensure_storage()
-    ensure_demo_viewing()
+    if settings.demo_mode:
+        ensure_demo_viewing()
     async with mcp_app.lifespan(app):
         yield
 
@@ -108,18 +121,43 @@ class TimingMiddleware:
 
 
 app.add_middleware(BearerAuthMiddleware)
+app.add_middleware(DemoGuardMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(TimingMiddleware)
+app.add_middleware(RequestContextMiddleware)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts)
 
 if WEB_DIR.exists():
     app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
-app.mount("/media", StaticFiles(directory=RUNTIME_DIR), name="media")
+# Only generated model art is public. Uploaded frames live in a sibling
+# directory and are served by the signed /media/frames/{name} route. Mounting
+# RUNTIME_DIR here would expose runtime/dev-secret.key and the SQLite database.
+app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def index() -> HTMLResponse:
     index_file = WEB_DIR / "index.html"
-    if index_file.exists():
+    if settings.demo_mode and index_file.exists():
         return HTMLResponse(index_file.read_text())
+    if not settings.demo_mode and index_file.exists():
+        return HTMLResponse(
+            """<!doctype html><html><head><meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <title>ScreenToStream Concierge</title>
+            <style>body{margin:0;background:#070c16;color:#eaf1ff;font:16px/1.6 ui-sans-serif,system-ui;padding:48px 24px}
+            main{max-width:720px;margin:auto}h1{font-size:30px}code,pre{background:#101a2c;border:1px solid #24334d;border-radius:8px}
+            code{padding:2px 6px}pre{padding:16px;overflow:auto}a{color:#f0b35b}</style></head><body><main>
+            <h1>ScreenToStream Concierge</h1>
+            <p>The MCP server is running. The interactive demo simulator is disabled on this host.</p>
+            <p>MCP endpoint: <code>__RESOURCE_URL__</code></p>
+            <p>Protocol metadata:
+              <a href="/.well-known/oauth-protected-resource">protected resource</a> ·
+              <a href="/.well-known/oauth-authorization-server">authorization server</a>
+            </p>
+            <p><a href="/docs/alexa-plus">Alexa+ integration notes</a></p>
+            </main></body></html>""".replace("__RESOURCE_URL__", settings.resource_url)
+        )
     return HTMLResponse(
         "<h1>ScreenToStream Concierge</h1>"
         "<p>The MCP server is running. The web simulator has not been built yet.</p>"

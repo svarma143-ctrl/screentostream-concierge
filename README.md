@@ -261,11 +261,17 @@ Tool descriptions are written for a voice agent: they explain *when* to use each
 | `resource` parameter | Required on authorize and token; must equal `PUBLIC_BASE_URL + /mcp` |
 | Bearer tokens | JWT access tokens, `Authorization: Bearer …` |
 | Refresh | Rotating refresh tokens; used tokens are revoked |
+| Revocation | `POST /oauth/revoke` (RFC 7009), access and refresh tokens |
+| Key rotation | `SECRET_KEY_PREVIOUS` keeps previously signed tokens valid during an overlap |
+| Confidential clients | Optional `client_secret` with `client_secret_basic` or `client_secret_post`; public PKCE clients remain the Alexa+ default |
 | Authorization codes | 5-minute TTL, SHA-256 hashed at rest, single use |
 | Redirect URI | Exact match against the provisioned client registry |
 | Unauthenticated MCP | `401`, JSON error, **no `WWW-Authenticate` header** |
-| CORS / host checks | FastMCP allowed hosts/origins derived from `PUBLIC_BASE_URL` + localhost |
+| CORS / host checks | FastMCP allowed hosts/origins derived from `PUBLIC_BASE_URL` + localhost; FastAPI routes use `TrustedHostMiddleware` |
 | Token response | `Cache-Control: no-store`, `Pragma: no-cache` |
+| Uploaded frames | Private, short-lived HMAC-signed `/media/frames/...` URLs |
+| Demo surfaces | Enforced `DEMO_MODE`, optional HTTP Basic, per-IP rate limit |
+| Request tracing | `X-Request-ID` on every response; structured JSON access log without query strings |
 
 ### Discovery endpoints
 
@@ -285,14 +291,30 @@ GET /.well-known/oauth-authorization-server
   "issuer": "https://your-host",
   "authorization_endpoint": "https://your-host/oauth/authorize",
   "token_endpoint": "https://your-host/oauth/token",
+  "revocation_endpoint": "https://your-host/oauth/revoke",
   "response_types_supported": ["code"],
   "code_challenge_methods_supported": ["S256"],
   "token_endpoint_auth_methods_supported": ["none"],
+  "revocation_endpoint_auth_methods_supported": ["none"],
   "resource_parameter_supported": true
 }
 ```
 
 The in-app consent page is deliberately plain and explicit about the four scopes. The simulator's **Link account** button really opens it; after approval the callback stores a Bearer token in an HttpOnly cookie so the UI can show the linked state and the server can call its own MCP endpoint.
+
+### Demo and production boundaries
+
+The simulator and its control routes are a demo surface, not an admin API. Three controls are enforced rather than documented:
+
+1. **`DEMO_MODE=false`** removes `/api/demo/*`, `/api/simulator/*`, `/api/viewing/*`, `/api/usage`, `/api/status`, `/api/events/*`, `/api/catalog`, and `/api/bookings/*`; the root page becomes a service landing page. OAuth, MCP, metadata, and health stay up.
+2. **`DEMO_AUTH_USERNAME` + `DEMO_AUTH_PASSWORD`** add HTTP Basic protection to the simulator page and demo APIs. The MCP endpoint remains a bearer-token boundary and is intentionally exempt.
+3. **`DEMO_RATE_LIMIT_PER_MINUTE`** applies a per-IP fixed window to demo control routes, so a public tunnel cannot be used to trigger unlimited provider calls.
+
+Production also fails closed on configuration: `ENVIRONMENT=production` requires an explicit `SECRET_KEY` of at least 32 characters and rejects `DEMO_MODE=true` unless `ALLOW_DEMO_IN_PRODUCTION=true` is deliberately set for an isolated, protected host. See [docs/PRODUCTION.md](docs/PRODUCTION.md) for the deployment checklist and [docs/STORAGE.md](docs/STORAGE.md) for the SQLite/object-storage boundary.
+
+### Security headers and logs
+
+Every response gets a request ID plus `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and `Cross-Origin-Opener-Policy`; HTTPS deployments also get HSTS. Access logs are one JSON line per request with method, path, status, duration, client IP, and request ID. Query strings are deliberately excluded because OAuth codes and state values live there.
 
 ---
 
@@ -303,8 +325,18 @@ Copy `.env.example` to `.env`. The important settings:
 | Variable | Default | Notes |
 |---|---|---|
 | `PUBLIC_BASE_URL` | `http://127.0.0.1:8000` | **Must be the public HTTPS URL** for Alexa+ and tunnels. It defines the OAuth issuer, resource, and redirect URI. |
+| `ALLOWED_HOSTS` | empty | Extra Host header values accepted by `TrustedHostMiddleware`, comma separated (for example a LAN IP). |
 | `INTERNAL_MCP_URL` | `http://127.0.0.1:8000/mcp` | How the simulator reaches MCP. In Docker, keep this at `http://127.0.0.1:8000/mcp` inside the container. |
-| `SECRET_KEY` | generated file | Locally stored in `runtime/dev-secret.key` so tokens survive restarts. Set a real secret in production. |
+| `SECRET_KEY` | generated file | Locally stored in `runtime/dev-secret.key` so tokens survive restarts. **Required** and at least 32 characters when `ENVIRONMENT=production`. |
+| `SECRET_KEY_PREVIOUS` | empty | Comma/space separated old keys accepted during a rotation overlap. |
+| `ENVIRONMENT` | `development` | `production` enables fail-closed secret checks and rejects demo mode by default. |
+| `DEMO_MODE` | `true` | Enables the simulator and demo control routes. Set `false` in production. |
+| `ALLOW_DEMO_IN_PRODUCTION` | `false` | Explicit opt-in for an isolated, protected production demo host. |
+| `DEMO_AUTH_USERNAME`, `DEMO_AUTH_PASSWORD` | empty | Optional HTTP Basic protection for the simulator and demo APIs. Set both or neither. |
+| `DEMO_RATE_LIMIT_PER_MINUTE` | `60` | Per-IP fixed window for demo control routes; `0` disables. |
+| `FRAME_URL_TTL_SECONDS` | `900` | Lifetime of signed uploaded-frame URLs. |
+| `ACCESS_LOG_ENABLED` | `true` | Structured JSON access log with request IDs. |
+| `TRUST_PROXY_HEADERS` | `false` | Honor `CF-Connecting-IP` / `X-Forwarded-For` only behind a trusted tunnel or load balancer. |
 | `DATABASE_PATH` | `runtime/concierge.db` | SQLite file. |
 | `BEDROCK_MODE` | `auto` | `auto` uses Bedrock when standard AWS credential markers or a short-term Bedrock API key are present; `live` forces it; `off` disables Bedrock and uses the optional fallback adapters when configured. |
 | `AWS_REGION` | `us-east-1` | Bedrock region. `AWS_DEFAULT_REGION` is also honored. |
@@ -343,7 +375,9 @@ Provider calls are logged to the `usage` table and surfaced at `/api/usage`; `/a
 ### Local checks
 
 ```bash
-make test          # pytest, isolated temporary DB
+make test          # pytest, isolated temporary DB (UI test excluded)
+make ui-install    # download Playwright Chromium once
+make ui-test       # browser smoke test of the judge path
 make lint          # ruff
 make format        # ruff format + fix
 make smoke         # protocol + OAuth + MCP client checks against :8000
@@ -364,6 +398,10 @@ The test suite is intentionally **not** a mock-only unit suite. It covers:
 - planner, quote, booking idempotency, refinement
 - bootstrap, scene switch, frame upload, non-image rejection
 - calendar `.ics` export for a real booking
+- production secret fail-closed checks, key rotation, OAuth revocation, confidential-client auth
+- demo gating, optional Basic auth, rate limiting, request IDs, security headers
+- signed frame URLs, expiry, tamper rejection, and static-media privacy
+- a Playwright browser test that clicks **Play the scene → Quote it → Book it** and checks the MCP trace
 
 ### Smoke test
 
@@ -382,11 +420,11 @@ cp .env.example .env
 docker compose up --build
 ```
 
-The compose file persists SQLite and uploaded frames in `./runtime`. Set `PUBLIC_BASE_URL` in `.env` to the URL people will actually open.
+The compose file persists SQLite, uploaded frames, and generated art in the named `concierge-runtime` volume. Set `PUBLIC_BASE_URL` in `.env` to the URL people will actually open.
 
-The image was built and exercised locally through a Lima ARM64 VM: the container reached `healthy`, and the full OAuth/MCP smoke test passed inside it. `hadolint Dockerfile` is also clean. See [docs/DOCKER_VERIFICATION.md](docs/DOCKER_VERIFICATION.md) for the commands and output.
+The image installs the exact `uv.lock` dependency set and runs as UID `10001`, with a read-only root filesystem, a writable `/tmp` tmpfs, dropped Linux capabilities, and `no-new-privileges`. The named volume inherits the non-root owner, so SQLite and uploads work without chowning a host directory.
 
-`.github/workflows/ci.yml` runs Ruff, the browser JavaScript syntax check, and pytest. `.github/workflows/docker-check.yml` repeats the image build and `/api/health` check. Both workflows run on every push and are green on the latest `main` commit in [GitHub Actions](https://github.com/svarma143-ctrl/screentostream-concierge/actions).
+`.github/workflows/ci.yml` runs Ruff, the browser JavaScript syntax check, pytest, and the Playwright UI test. `.github/workflows/docker-check.yml` builds the image and checks `/api/health`. Both workflows run on every push and are green on the latest `main` commit in [GitHub Actions](https://github.com/svarma143-ctrl/screentostream-concierge/actions).
 
 ### Public tunnel
 
@@ -412,7 +450,7 @@ Use `https://....trycloudflare.com/mcp` when registering the MCP server in Alexa
 
 If you use ngrok or localtunnel instead, the same rule applies: start the tunnel first, then restart the app with `PUBLIC_BASE_URL` set to the **exact HTTPS origin** (not just submit the tunnel URL). The app listens on port `8000`, not `8080`. Localtunnel may also show an interstitial page, which can break MCP clients; a Cloudflare quick tunnel or named tunnel is the safer demo path.
 
-**Tunnel security:** the simulator, demo reset, and frame-upload routes are demo surfaces, not a production-authenticated admin boundary. A public tunnel exposes them. Keep the tunnel alive only for the demo/recording, use a named tunnel with access controls if possible, and do not treat a quick-tunnel URL as a permanent deployment.
+**Tunnel security:** the simulator and its control routes are a demo surface. They are now gated by `DEMO_MODE`, optionally protected with HTTP Basic, and rate-limited per IP. For a public tunnel, set `DEMO_AUTH_USERNAME` and `DEMO_AUTH_PASSWORD` (or put Cloudflare Access in front) before sharing the URL. The MCP endpoint remains OAuth bearer-only and is not affected by the demo gate. Keep the tunnel alive only for the demo/recording, and do not treat a quick-tunnel URL as a permanent deployment.
 
 ### Onboarding Alexa+
 
@@ -459,26 +497,28 @@ Run `make smoke` and watch the trace for current numbers on your machine. Live p
 ```text
 app/
   main.py          FastAPI entry point, lifespan, mounts, timing middleware
-  auth.py          OAuth 2.1 AS, PKCE, metadata, bearer middleware, consent
+  security.py      demo gate, Basic auth, rate limit, request IDs, headers, logs
+  auth.py          OAuth 2.1 AS, PKCE, metadata, revocation, key rotation, bearer
   mcp_server.py    14 MCP tools and voice-oriented descriptions
   planner.py       planning, pricing, refinement, quotes, bookings, cache
   intents.py       typed TravelIntent contract, token aliases, agent matrix
   prompts.py       structured Bedrock/DeepSeek/MiniMax prompt bundles
   agent_context.py persistent server-side context chain
   synthesis.py     deterministic + Bedrock/MiniMax visual itinerary cards
-  media.py         frame format/dimension/aspect-ratio inspection
+  media.py         frame inspection plus HMAC-signed frame URLs
   providers.py     provider factory + DeepSeek/MiniMax adapters
   aws_bedrock.py   Bedrock Runtime adapter: Converse, vision, Nova/Titan art
   simulator.py     real MCP client, model-directed agent loop, rules router
   catalog.py       destinations, scenes, dates, search, budget parsing
-  api.py           demo/viewing/simulator/SSE/calendar/health endpoints
+  api.py           demo/viewing/simulator/SSE/calendar/health/signed media
   db.py            SQLite schema, seeding, helpers
   web/             simulator UI, styles, app.js, eight SVG scenes
 data/              curated destinations, stays, experiences, dining, scenes
-tests/             46 isolated protocol/planner/API/Bedrock/Phase 3–4 tests
+tests/             68 isolated tests plus a Playwright UI test
+tests/ui/          browser smoke test for the judge path
 scripts/           smoke.py, bedrock_check.py, tunnel.sh
-.github/           CI: Python checks + Docker build/health check
-docs/              Alexa+ integration, AWS blueprint + agentic loop, friction log, feedback
+.github/           CI: Python checks + UI test + Docker build/health check
+docs/              Alexa+ integration, production/storage, AWS blueprint, friction log
 ```
 
 ---
@@ -493,7 +533,9 @@ docs/              Alexa+ integration, AWS blueprint + agentic loop, friction lo
 | `GET /.well-known/oauth-authorization-server` | AS metadata |
 | `GET/POST /oauth/authorize` | Consent and authorization code |
 | `POST /oauth/token` | Code/refresh token exchange |
+| `POST /oauth/revoke` | Revoke an access or refresh token (RFC 7009) |
 | `GET /auth/callback` | Simulator OAuth callback (sets HttpOnly token cookie) |
+| `GET /media/frames/{name}` | Signed, expiring uploaded-frame bytes |
 | `GET /api/demo/bootstrap` | UI bootstrap: scenes, catalog, provider/auth state |
 | `GET /api/demo/oauth-url` | Starts a PKCE authorization request for the simulator |
 | `GET /api/demo/link-status` | Validates the simulator cookie's Bearer token |
@@ -512,6 +554,8 @@ docs/              Alexa+ integration, AWS blueprint + agentic loop, friction lo
 | `GET /api/health` | Health, MCP floor, protocol info |
 | `GET /docs/alexa-plus` | Human-readable integration page |
 
+All `/api/demo/*`, `/api/simulator/*`, `/api/viewing/*`, `/api/usage`, `/api/status`, `/api/events/*`, `/api/catalog`, and `/api/bookings/*` routes are demo surfaces: they return `404` when `DEMO_MODE=false`, can require HTTP Basic, and are rate-limited. `POST /mcp`, OAuth, metadata, `/media/generated/*`, and `/api/health` stay available.
+
 ---
 
 ## Honest status
@@ -523,14 +567,18 @@ docs/              Alexa+ integration, AWS blueprint + agentic loop, friction lo
 - Plan → refine → quote → book → calendar
 - Frame upload through the fallback vision path
 - Scene switching, responsive layout, OAuth linking that survives reload/restart
-- 46 passing isolated tests, clean Ruff lint/format check, clean Hadolint check
-- Docker image built under Lima/ARM64; container health check and full MCP smoke test passed inside the container
+- 68 isolated tests plus a Playwright browser test; clean Ruff lint/format and Hadolint checks
+- Demo routes gated by `DEMO_MODE`, optional Basic auth, and per-IP rate limiting
+- Uploaded frames served only through expiring HMAC-signed URLs; static media cannot reach SQLite or the dev secret
+- Production secret fail-closed behavior, signing-key rotation, OAuth revocation, and confidential-client support
+- Request IDs, security headers, and structured access logs
+- Docker image defined with the locked `uv.lock` set and a non-root user; CI builds it and checks `/api/health`
 - Public Cloudflare quick tunnel verified with the full OAuth/MCP smoke test
 - Typed intent mapping, prompt bundles, persistent context chain, agent matrix route
 - Frame image metadata, deterministic visual cards, and the Bedrock/MiniMax card adapter
 - Amazon Bedrock Runtime adapter (Converse, multimodal frame blocks, Nova/Titan image generation) with mocked-runtime tests
 - A loop-level test that executes a model-selected MCP tool and feeds the result into the next Converse turn
-- `make bedrock-check` live readiness gate; GitHub Actions Python and Docker workflows passed on the first push
+- `make bedrock-check` live readiness gate; GitHub Actions runs Python, Playwright, and Docker checks
 
 **Not yet verified in this environment:**
 
@@ -553,10 +601,22 @@ For the submission-ready documents, see:
 - **[docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)** — sub-3-minute shot list, recording checklist, and upload copy.
 - **[docs/ALEXA_PLUS_ONBOARDING.md](docs/ALEXA_PLUS_ONBOARDING.md)** — self-hosted submission path, judge test, optional Alexa+ console steps, and known limitations.
 - **[docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md)** — Alexa+, AWS, verification, and repository-hygiene checklist.
+- **[docs/PRODUCTION.md](docs/PRODUCTION.md)** — production configuration, demo gating, key rotation, proxy, and multi-instance caveats.
+- **[docs/STORAGE.md](docs/STORAGE.md)** — SQLite/local-media boundary and the Postgres/S3 migration plan.
 - **[docs/AWS_ACCOUNT_SETUP.md](docs/AWS_ACCOUNT_SETUP.md)** — from-zero AWS account, IAM, Anthropic first-time-use, credential, and verification guide.
 - **[docs/AWS_ARCHITECTURE_BLUEPRINT.md](docs/AWS_ARCHITECTURE_BLUEPRINT.md)** — AWS architecture, request flows, security, fallback matrix, and test evidence.
 - **[docs/FRICTION_LOG_V2.md](docs/FRICTION_LOG_V2.md)** — guided friction log with BLUF and grade, persona, scoped checklist, pros/cons, severity-ranked findings, questions, recommendations, test environment, and success/failure evidence.
 - **[docs/FRICTION_LOG.md](docs/FRICTION_LOG.md)** — detailed engineering log with the full F-01 through F-13 write-ups.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the `v0.1.0` baseline.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and the checks a pull request
+must pass. Report vulnerabilities privately through [SECURITY.md](SECURITY.md),
+not in a public issue.
 
 ## License
 

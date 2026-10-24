@@ -187,7 +187,7 @@ No continuous build recording was captured. Timestamps are marked `N/A` rather t
 
 **Expected:** A unified image-generation contract with a capability matrix.
 
-**Actual:** Titan Image Generator v1 renders 1024×1024. Nova Canvas can render 1280×720 for a native 16:9 card. Their request bodies and response fields are not identical. The adapter normalizes the response to base64 and caches decoded bytes under `runtime/generated/`, serving them from `/media/generated/...`. The card CSS uses `background-size: cover`, so a square Titan image crops cleanly. That is a workaround, not a unified contract.
+**Actual:** Titan Image Generator v1 renders 1024×1024. Nova Canvas can render 1280×720 for a native 16:9 card. Their request bodies and response fields are not identical. The adapter normalizes the response to base64 and caches decoded bytes under `runtime/media/generated/`, serving them from `/media/generated/...`. The card CSS uses `background-size: cover`, so a square Titan image crops cleanly. That is a workaround, not a unified contract.
 
 **Recommendation:** Publish a model-capability matrix with supported sizes, aspect ratios, output formats, and request fields. Provide a single high-level “generate image” helper with model-specific adapters underneath. Document that generated media needs a lifecycle policy in production (S3 + CloudFront, not a local volume).
 

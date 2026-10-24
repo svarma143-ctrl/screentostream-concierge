@@ -1,6 +1,6 @@
 # Submission checklist
 
-Last verified: **2026-10-22**
+Last verified: **2026-10-24**
 
 **Deadline:** **2026-10-23, 12:00 PM PDT** (Build, Ship, Shape: Amazon Developer
 Hackathon).
@@ -27,7 +27,9 @@ submission, **optional** = useful but not required.
 | `401` without `WWW-Authenticate` | done | Smoke test asserts the header is absent |
 | MCP session id | done | `mcp-session-id` returned by `initialize` |
 | All 14 tools listed and callable | done | `tools/list` plus smoke plan/quote/book path |
-| Refresh-token rotation and revocation | done | `tests/test_metadata_and_auth.py` |
+| Refresh-token rotation and revocation | done | `POST /oauth/revoke`; `tests/test_metadata_and_auth.py`, `tests/test_security_hardening.py` |
+| Signing-key rotation | done | `SECRET_KEY_PREVIOUS`; `tests/test_security_hardening.py` |
+| Confidential clients | optional | `client_secret_basic` / `client_secret_post`; public PKCE remains the Alexa+ default |
 | Alexa+ Preview console onboarding | optional | Not required for the self-hosted MCP path; the simulator is a real MCP client. See `docs/ALEXA_PLUS_ONBOARDING.md` |
 
 ---
@@ -78,16 +80,19 @@ submission, **optional** = useful but not required.
 | Check | Status | Command or document |
 |---|---|---|
 | One-command judge demo | done | `make demo` → `http://127.0.0.1:8000`; no account, API key, or email |
-| Unit/integration suite | done | `make test` — **46 passed** |
+| Unit/integration suite | done | `make test` — **68 passed** (UI test excluded) |
+| Browser UI smoke test | done | `make ui-test` — Playwright clicks Play → Quote → Book and checks the MCP trace |
+| Demo route protection | done | `DEMO_MODE`, optional HTTP Basic, per-IP rate limit |
+| Frame privacy | done | Uploaded frames require expiring HMAC-signed URLs |
 | Ruff lint | done | `make lint` |
 | Ruff formatting | done | `make format-check` |
 | Local OAuth/MCP smoke | done | `make smoke` |
 | Public HTTPS tunnel smoke | done | Cloudflare quick tunnel; OAuth/MCP contract passed |
-| Docker image build | done | `docs/DOCKER_VERIFICATION.md` |
-| Container health check | done | `docs/DOCKER_VERIFICATION.md` |
-| In-container MCP smoke | done | `docs/DOCKER_VERIFICATION.md` |
-| Dockerfile lint | done | `hadolint Dockerfile` |
-| GitHub Actions | done | Python checks and Docker build/health check passed on the first push |
+| Docker image build | done | CI: `.github/workflows/docker-check.yml` |
+| Container health check | done | CI: container reaches `/api/health` |
+| In-container MCP smoke | done | `docs/DOCKER_VERIFICATION.md` (pre-hardening image); CI covers build/health |
+| Dockerfile lint | done | Hadolint step in `.github/workflows/docker-check.yml` |
+| GitHub Actions | done | Python, UI, and Docker checks run on every push |
 | Demo recording | done | `demo/screentostream-concierge-demo-andrew-agentic.mp4` — **1:28**, 1920×1080, English neural voiceover, soft captions |
 
 ---
@@ -96,6 +101,11 @@ submission, **optional** = useful but not required.
 
 - [x] MIT license
 - [x] No hardcoded AWS, DeepSeek, or MiniMax secrets
+- [x] Production fails closed without `SECRET_KEY`; demo mode is rejected by default
+- [x] Demo routes gated, optionally Basic-protected, and rate-limited
+- [x] Uploaded frames served only through expiring signed URLs
+- [x] OAuth revocation, key rotation, and optional confidential clients
+- [x] Request IDs, security headers, and structured access logs
 - [x] `.env` ignored by Git and Docker
 - [x] Credential-free test path
 - [x] Architecture blueprint
@@ -120,6 +130,8 @@ submission, **optional** = useful but not required.
 
 ```bash
 make check          # lint + format check + tests
+make ui-install     # download Playwright Chromium once
+make ui-test        # browser judge-path smoke test
 make smoke          # local OAuth/MCP contract test (server must be running)
 make smoke-full     # also writes a demo trip, quote, and booking
 make bedrock-check  # live Bedrock gate; fails if AWS is not ready

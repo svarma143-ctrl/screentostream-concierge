@@ -357,7 +357,7 @@ class MiniMax:
         digest = hashlib.sha256(
             f"{prompt}|{aspect_ratio}|{settings.minimax_image_model}".encode()
         ).hexdigest()[:20]
-        out_dir = Path(settings.runtime_dir) / "generated"
+        out_dir = Path(settings.runtime_dir) / "media" / "generated"
         out_dir.mkdir(parents=True, exist_ok=True)
         target = out_dir / f"{digest}.jpg"
         if target.exists() and target.stat().st_size > 0:

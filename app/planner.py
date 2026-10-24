@@ -22,6 +22,7 @@ from . import catalog
 from .config import settings
 from .db import execute, fetch_all, fetch_one, json_load, utc_now
 from .intents import TravelIntent
+from .media import sign_frame_url
 from .providers import (
     ProviderError,
     fallback_dish_story,
@@ -102,6 +103,8 @@ def get_viewing(user_id: str = "demo-user") -> dict | None:
         return None
     data = dict(row)
     data["context"] = json_load(data.pop("context_json", None), {})
+    if (data.get("image_path") or "").startswith("/media/frames/"):
+        data["image_path"] = sign_frame_url(data["image_path"])
     item = catalog.scene(data.get("scene_id"))
     if item:
         data["scene"] = catalog.scene_payload(item, confidence=0.97)

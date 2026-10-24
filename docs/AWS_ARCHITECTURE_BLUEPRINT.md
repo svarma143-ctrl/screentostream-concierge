@@ -215,6 +215,12 @@ Effective provider selection is exposed at `/api/simulator/status`.
   - `concierge.book` for quote/booking;
   - `profile.read` / `profile.write` for preferences.
 - Tokens are validated for issuer, audience, expiry, and type.
+- `POST /oauth/revoke` supports access and refresh revocation (RFC 7009).
+- `SECRET_KEY_PREVIOUS` allows an overlap during signing-key rotation.
+- Public PKCE clients are the Alexa+ default; confidential clients can opt into
+  `client_secret_basic` or `client_secret_post`.
+- The simulator and demo control routes are gated by `DEMO_MODE`, optionally
+  protected with HTTP Basic, and rate-limited per IP.
 
 ### 6.2 AWS credentials
 
@@ -231,11 +237,15 @@ Recommended production identity:
 ### 6.3 Data handling
 
 - Frame bytes are sent to Bedrock only for vision requests.
-- Generated imagery is cached locally under `runtime/generated/`.
-- The app does not log raw image bytes or bearer tokens.
+- Generated imagery is cached locally under `runtime/media/generated/`.
+- Uploaded frames are served only through expiring HMAC-signed URLs; the public
+  `/media` mount contains generated art only.
+- The app does not log raw image bytes, bearer tokens, or query strings.
 - Provider error text is truncated before storage.
 - SQLite stores simulated bookings only; there are no real payments or
-  inventory holds.
+  inventory holds. See `docs/STORAGE.md` for the production boundary.
+- Every response carries an `X-Request-ID` and browser security headers; access
+  logs are structured JSON.
 
 ---
 

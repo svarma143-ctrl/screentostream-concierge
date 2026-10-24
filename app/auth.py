@@ -26,11 +26,11 @@ import time
 from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import unquote_plus, urlencode
 
 import jwt
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from .config import settings
@@ -87,17 +87,22 @@ def _jwt_encode(payload: dict[str, Any]) -> str:
 
 
 def _jwt_decode(token: str, *, audience: str | None = None) -> dict[str, Any]:
-    try:
-        return jwt.decode(
-            token,
-            settings.secret_key,
-            algorithms=["HS256"],
-            audience=audience or settings.resource_url,
-            issuer=settings.issuer,
-            options={"require": ["exp", "iat", "iss", "aud", "sub"]},
-        )
-    except jwt.PyJWTError as exc:
-        raise OAuthError("invalid_token", "The access token is invalid or expired.", 401) from exc
+    last_error: jwt.PyJWTError | None = None
+    for key in settings.signing_keys:
+        try:
+            return jwt.decode(
+                token,
+                key,
+                algorithms=["HS256"],
+                audience=audience or settings.resource_url,
+                issuer=settings.issuer,
+                options={"require": ["exp", "iat", "iss", "aud", "sub"]},
+            )
+        except jwt.PyJWTError as exc:
+            last_error = exc
+    raise OAuthError(
+        "invalid_token", "The access token is invalid or expired.", 401
+    ) from last_error
 
 
 def create_access_token(
@@ -178,6 +183,8 @@ def issue_demo_token(user_id: str = "demo-user") -> str:
     demo. The full consent + code exchange flow remains available at
     /oauth/authorize and is exercised by the smoke test.
     """
+    if not settings.demo_mode:
+        raise RuntimeError("Demo tokens are disabled when DEMO_MODE is false.")
     token, _ = create_access_token(user_id, settings.simulator_client_id, settings.scopes)
     return token
 
@@ -231,15 +238,24 @@ class BearerAuthMiddleware:
 # --------------------------------------------------------------------------- metadata
 
 
+def _auth_methods_supported() -> list[str]:
+    methods = ["none"]
+    if any(not client["public"] for client in settings.parsed_clients().values()):
+        methods.extend(["client_secret_basic", "client_secret_post"])
+    return methods
+
+
 def _metadata_base() -> dict[str, Any]:
     return {
         "issuer": settings.issuer,
         "authorization_endpoint": f"{settings.base_url}/oauth/authorize",
         "token_endpoint": f"{settings.base_url}/oauth/token",
+        "revocation_endpoint": f"{settings.base_url}/oauth/revoke",
         "scopes_supported": settings.scopes,
         "response_types_supported": ["code"],
         "grant_types_supported": ["authorization_code", "refresh_token"],
-        "token_endpoint_auth_methods_supported": ["none"],
+        "token_endpoint_auth_methods_supported": _auth_methods_supported(),
+        "revocation_endpoint_auth_methods_supported": _auth_methods_supported(),
         "code_challenge_methods_supported": ["S256"],
         "resource_parameter_supported": True,
         "authorization_response_iss_parameter_supported": True,
@@ -288,8 +304,55 @@ def _scope_descriptions() -> dict[str, str]:
 def _validate_client(client_id: str) -> dict:
     client = settings.client(client_id)
     if client is None:
-        raise OAuthError("invalid_client", "Unknown client_id.")
+        raise OAuthError("invalid_client", "Unknown client_id.", 401)
     return client
+
+
+def _basic_credentials(request: Request) -> tuple[str, str] | None:
+    header = request.headers.get("authorization", "")
+    if not header.lower().startswith("basic "):
+        return None
+    try:
+        decoded = base64.b64decode(header.split(" ", 1)[1].strip(), validate=True).decode("utf-8")
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise OAuthError("invalid_client", "Malformed client authentication.", 401) from exc
+    if ":" not in decoded:
+        raise OAuthError("invalid_client", "Malformed client authentication.", 401)
+    client_id, secret = decoded.split(":", 1)
+    return unquote_plus(client_id), unquote_plus(secret)
+
+
+def _authenticate_client(
+    request: Request,
+    form_client_id: str | None,
+    form_secret: str | None,
+) -> str:
+    """Authenticate the OAuth client for token/revocation requests.
+
+    Public clients use ``none``; confidential clients may use either HTTP Basic
+    or ``client_secret_post``. Secrets live only in the environment-backed
+    client registry and are never written to SQLite.
+    """
+    basic = _basic_credentials(request)
+    if basic is not None:
+        basic_id, secret = basic
+        if form_client_id and form_client_id != basic_id:
+            raise OAuthError(
+                "invalid_request",
+                "client_id in the form does not match the Basic authorization header.",
+            )
+        client_id, presented_secret = basic_id, secret
+    else:
+        if not form_client_id:
+            raise OAuthError("invalid_client", "client_id is required.", 401)
+        client_id, presented_secret = form_client_id, form_secret or ""
+
+    client = _validate_client(client_id)
+    if not client["public"]:
+        expected = client.get("client_secret") or ""
+        if not expected or not hmac.compare_digest(presented_secret, expected):
+            raise OAuthError("invalid_client", "Client authentication failed.", 401)
+    return client_id
 
 
 def _validate_redirect(client: dict, redirect_uri: str) -> None:
@@ -348,13 +411,16 @@ def _sign_request(payload: dict[str, Any]) -> str:
 
 
 def _read_request(token: str) -> dict[str, Any]:
-    try:
-        data = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
-    except jwt.PyJWTError as exc:
-        raise OAuthError(
-            "invalid_request", "The authorization request expired. Please start again."
-        ) from exc
-    return data.get("request", {})
+    last_error: jwt.PyJWTError | None = None
+    for key in settings.signing_keys:
+        try:
+            data = jwt.decode(token, key, algorithms=["HS256"])
+            return data.get("request", {})
+        except jwt.PyJWTError as exc:
+            last_error = exc
+    raise OAuthError(
+        "invalid_request", "The authorization request expired. Please start again."
+    ) from last_error
 
 
 def _redirect(redirect_uri: str, params: dict[str, str]) -> RedirectResponse:
@@ -513,8 +579,10 @@ def _create_code(validated: dict[str, Any], user_id: str) -> str:
 
 @router.post("/oauth/token")
 async def token(
+    request: Request,
     grant_type: str = Form(...),
-    client_id: str = Form(...),
+    client_id: str | None = Form(None),
+    client_secret: str | None = Form(None),
     code: str | None = Form(None),
     redirect_uri: str | None = Form(None),
     code_verifier: str | None = Form(None),
@@ -531,7 +599,7 @@ async def token(
         )
 
     try:
-        _validate_client(client_id)
+        client_id = _authenticate_client(request, client_id, client_secret)
 
         if grant_type == "authorization_code":
             if not code or not redirect_uri or not code_verifier:
@@ -566,6 +634,10 @@ async def token(
             payload = _jwt_decode(refresh_token, audience=canonical)
             if payload.get("token_use") != "refresh":
                 raise OAuthError("invalid_grant", "This is not a refresh token.")
+            if payload.get("client_id") != client_id:
+                raise OAuthError(
+                    "invalid_grant", "The refresh token was issued to a different client."
+                )
             with connect() as conn:
                 revoked = conn.execute(
                     "SELECT 1 FROM oauth_revoked WHERE jti = ?", (payload["jti"],)
@@ -602,6 +674,62 @@ async def token(
         )
     except OAuthError as exc:
         return error(exc)
+
+
+@router.post("/oauth/revoke")
+async def revoke(
+    request: Request,
+    token: str = Form(...),
+    token_type_hint: str | None = Form(None),
+    client_id: str | None = Form(None),
+    client_secret: str | None = Form(None),
+) -> Response:
+    """RFC 7009 revocation for access and refresh tokens.
+
+    Unknown or already-invalid tokens still return 200 so the endpoint cannot
+    be used as a token oracle. ``token_type_hint`` is accepted for client
+    compatibility; both token classes are revoked by ``jti``.
+    """
+    headers = {"Cache-Control": "no-store", "Pragma": "no-cache"}
+    try:
+        authenticated_client = _authenticate_client(request, client_id, client_secret)
+    except OAuthError as exc:
+        return JSONResponse(
+            {"error": exc.error, "error_description": exc.description},
+            status_code=exc.status_code,
+            headers=headers,
+        )
+
+    _revoke_token(token, client_id=authenticated_client)
+    return Response(status_code=200, headers=headers)
+
+
+def _revoke_token(token: str, *, client_id: str | None = None) -> None:
+    payload: dict[str, Any] | None = None
+    for key in settings.signing_keys:
+        try:
+            payload = jwt.decode(
+                token,
+                key,
+                algorithms=["HS256"],
+                options={"verify_aud": False, "verify_iss": False},
+            )
+            break
+        except jwt.PyJWTError:
+            continue
+    if not payload:
+        return
+    if client_id and payload.get("client_id") not in (None, client_id):
+        return
+    now = int(time.time())
+    with connect() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO oauth_revoked (jti, expires_at) VALUES (?, ?)",
+            (payload.get("jti", secrets.token_urlsafe(8)), payload.get("exp", now + 60)),
+        )
+        # Keep the revocation table bounded.
+        conn.execute("DELETE FROM oauth_revoked WHERE expires_at < ?", (now,))
+        conn.commit()
 
 
 def _consume_code(
@@ -674,21 +802,8 @@ h1{{margin:0 0 8px;font-size:22px}}p{{color:#9fb0cc;line-height:1.55}}code{{back
 
 
 def revoke_refresh_token(token: str) -> None:
-    try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=["HS256"], options={"verify_aud": False}
-        )
-    except jwt.PyJWTError:
-        return
-    with connect() as conn:
-        conn.execute(
-            "INSERT OR REPLACE INTO oauth_revoked (jti, expires_at) VALUES (?, ?)",
-            (
-                payload.get("jti", secrets.token_urlsafe(8)),
-                payload.get("exp", int(time.time()) + 60),
-            ),
-        )
-        conn.commit()
+    """Backward-compatible helper; the public endpoint is ``/oauth/revoke``."""
+    _revoke_token(token)
 
 
 def oauth_debug_state() -> dict[str, Any]:
@@ -698,6 +813,7 @@ def oauth_debug_state() -> dict[str, Any]:
         "resource": settings.resource_url,
         "authorization_endpoint": f"{settings.base_url}/oauth/authorize",
         "token_endpoint": f"{settings.base_url}/oauth/token",
+        "revocation_endpoint": f"{settings.base_url}/oauth/revoke",
         "pkce": "S256",
         "prm": f"{settings.base_url}/.well-known/oauth-protected-resource",
         "as_metadata": f"{settings.base_url}/.well-known/oauth-authorization-server",

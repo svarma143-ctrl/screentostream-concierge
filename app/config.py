@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_SCOPES = (
@@ -64,7 +65,21 @@ class Settings(BaseSettings):
     internal_mcp_url: str = "http://127.0.0.1:8000/mcp"
     host: str = "0.0.0.0"
     port: int = 8000
+    # Extra Host header values accepted by TrustedHostMiddleware, comma
+    # separated. PUBLIC_BASE_URL's host and localhost are always included.
+    allowed_hosts: str = ""
     demo_mode: bool = True
+    # Demo surfaces are a stage, not a production admin boundary. Production
+    # refuses to start with DEMO_MODE=true unless this is explicitly accepted.
+    allow_demo_in_production: bool = False
+    # Optional HTTP Basic protection for the simulator, demo APIs, and root
+    # page. Set both values to enable it; the MCP endpoint is never affected.
+    demo_auth_username: str = ""
+    demo_auth_password: str = ""
+    # Per-IP fixed-window limit for the demo control routes. 0 disables it.
+    demo_rate_limit_per_minute: int = 60
+    trust_proxy_headers: bool = False
+    access_log_enabled: bool = True
 
     # ------------------------------------------------------------------ storage
     database_path: str = "runtime/concierge.db"
@@ -73,19 +88,51 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------ security
     # Set SECRET_KEY to a long random value in production. Locally, a stable
     # key is kept in runtime/dev-secret.key so the demo survives restarts.
-    secret_key: str = Field(default_factory=_dev_secret_key)
+    # SECRET_KEY_PREVIOUS accepts a comma/space separated list so signing keys
+    # can be rotated without invalidating live tokens during the overlap.
+    secret_key: str = ""
+    secret_key_previous: str = ""
 
     @field_validator("secret_key", mode="before")
     @classmethod
-    def _blank_secret_key_uses_dev_key(cls, value: object) -> object:
-        if value is None or (isinstance(value, str) and not value.strip()):
-            return _dev_secret_key()
+    def _normalise_secret_key(cls, value: object) -> object:
+        if value is None:
+            return ""
+        if isinstance(value, str):
+            return value.strip()
         return value
+
+    @model_validator(mode="after")
+    def _enforce_security_posture(self) -> Settings:
+        if bool(self.demo_auth_username.strip()) != bool(self.demo_auth_password.strip()):
+            raise ValueError("DEMO_AUTH_USERNAME and DEMO_AUTH_PASSWORD must be set together.")
+
+        if self.environment == "production":
+            if not self.secret_key:
+                raise ValueError(
+                    "SECRET_KEY must be set when ENVIRONMENT=production. "
+                    "Generate one with: python -c 'import secrets; print(secrets.token_urlsafe(48))'"
+                )
+            if len(self.secret_key) < 32:
+                raise ValueError("SECRET_KEY must be at least 32 characters in production.")
+            if self.demo_mode and not self.allow_demo_in_production:
+                raise ValueError(
+                    "DEMO_MODE must be false when ENVIRONMENT=production. "
+                    "Set ALLOW_DEMO_IN_PRODUCTION=true only for an isolated, protected demo host."
+                )
+        elif not self.secret_key:
+            # Development convenience: a stable local key so tokens survive a
+            # restart. This branch is unreachable in production by construction.
+            object.__setattr__(self, "secret_key", _dev_secret_key())
+
+        return self
 
     access_token_ttl_seconds: int = 3600
     refresh_token_ttl_seconds: int = 60 * 60 * 24 * 30
     auth_code_ttl_seconds: int = 300
     quote_ttl_seconds: int = 900
+    # Uploaded frames are private capabilities, not public static files.
+    frame_url_ttl_seconds: int = 900
 
     # OAuth client registry. Alexa+ does not use dynamic client registration
     # (DCR), so clients are provisioned here.
@@ -162,6 +209,19 @@ class Settings(BaseSettings):
     @property
     def scopes(self) -> list[str]:
         return list(DEFAULT_SCOPES)
+
+    @property
+    def demo_auth_enabled(self) -> bool:
+        return bool(self.demo_auth_username.strip() and self.demo_auth_password.strip())
+
+    @property
+    def previous_secret_keys(self) -> list[str]:
+        return [item for item in re.split(r"[\s,]+", self.secret_key_previous.strip()) if item]
+
+    @property
+    def signing_keys(self) -> list[str]:
+        """Current key first, then any rotation overlap keys."""
+        return list(dict.fromkeys([self.secret_key, *self.previous_secret_keys]))
 
     @property
     def deepseek_enabled(self) -> bool:
@@ -251,11 +311,13 @@ class Settings(BaseSettings):
                 "name": "ScreenToStream web simulator",
                 "redirect_uris": list(dict.fromkeys(redirects)),
                 "public": True,
+                "client_secret": "",
             },
             self.alexa_client_id: {
                 "name": "Alexa+",
                 "redirect_uris": list(dict.fromkeys(redirects)),
                 "public": True,
+                "client_secret": "",
             },
         }
 
@@ -267,10 +329,16 @@ def _normalise_client(client_id: str, value: dict) -> dict:
     redirects = value.get("redirect_uris", [])
     if isinstance(redirects, str):
         redirects = [item.strip() for item in redirects.split(",") if item.strip()]
+    secret = value.get("client_secret")
+    secret = secret.strip() if isinstance(secret, str) else ""
+    public = bool(value.get("public", not secret))
+    if not public and not secret:
+        raise ValueError(f"OAuth client '{client_id}' is confidential but has no client_secret.")
     return {
         "name": value.get("name", client_id),
         "redirect_uris": redirects,
-        "public": bool(value.get("public", True)),
+        "public": public,
+        "client_secret": secret,
     }
 
 

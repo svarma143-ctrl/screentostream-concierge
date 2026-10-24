@@ -2,6 +2,7 @@ services:
   concierge:
     build: .
     image: screentostream-concierge:latest
+    init: true
     ports:
       - "${PORT:-8000}:8000"
     env_file:
@@ -13,5 +14,17 @@ services:
       DATABASE_PATH: /app/runtime/concierge.db
       RUNTIME_DIR: /app/runtime
     volumes:
-      - ./runtime:/app/runtime
+      # Named volume keeps the non-root container able to write SQLite, frames,
+      # and generated art without chowning a host directory.
+      - concierge-runtime:/app/runtime
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     restart: unless-stopped
+
+volumes:
+  concierge-runtime:
