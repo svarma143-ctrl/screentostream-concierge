@@ -136,7 +136,7 @@ operations. Narrative and art are background work.
 2. If Bedrock is enabled, background synthesis asks Converse for editorial
    copy and an image prompt.
 3. `InvokeModel` generates a hero image; the result is cached under
-   `runtime/generated/` and served from `/media/generated/...`.
+   `runtime/media/generated/` and served from `/media/generated/...`.
 4. The plan is updated and `trip_card_ready` / `tv_card` events are published.
 5. If generation fails, the existing deterministic card remains valid.
 
