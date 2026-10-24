@@ -336,17 +336,18 @@ From-zero AWS account guide: [`docs/AWS_ACCOUNT_SETUP.md`](AWS_ACCOUNT_SETUP.md)
 - **Repository:** <https://github.com/svarma143-ctrl/screentostream-video-timeline>
 - **Contribution URL:** the same repository (new project)
 - **GitHub username:** `svarma143-ctrl`
-- **CI:** [GitHub Actions run](https://github.com/svarma143-ctrl/screentostream-video-timeline/actions/runs/39776675496) — passing
+- **CI:** [GitHub Actions run](https://github.com/svarma143-ctrl/screentostream-video-timeline/actions/runs/40100639346) — passing
 - **License:** MIT
 
 **What I did:** I created a standalone, MIT-licensed JSON Schema 2020-12
 contract for “shoppable/bookable video.” It maps time ranges in a video to a
 scene, a geospatial place, supporting evidence, confidence, and optional
 bookable catalog references. The repository includes two examples, a Python
-validator with semantic checks, nine tests, CI, and a short integration guide
-for MCP tool results. It was extracted from the working ScreenToStream Concierge
-reference implementation during the hackathon window, but it is a separate,
-reusable project rather than a copy of the primary app.
+validator with semantic checks, sixteen tests, CI on Python 3.10 and 3.12, a
+clean-wheel install check, and a short integration guide for MCP tool results.
+It was extracted from the working ScreenToStream Concierge reference
+implementation during the hackathon window, but it is a separate, reusable
+project rather than a copy of the primary app.
 
 **How it works:** A content pipeline or MCP tool emits a timeline document with
 `media`, `timeline[]`, `place`, `scene`, `evidence`, and optional `bookable`
