@@ -15,6 +15,7 @@ to be supplied by the deployment environment.
 | `DATABASE_PATH` | Writable location for SQLite, or the path used by your storage adapter. |
 | `RUNTIME_DIR` | Writable location for frames and generated art. |
 | `ALEXA_CLIENT_ID` / `ALEXA_REDIRECT_URIS` | Exact values from the Alexa+ toolkit, or a complete `OAUTH_CLIENTS_JSON` registry. |
+| `ALLOWED_HOSTS` | Extra Host header values if the service is reached through a name that is not `PUBLIC_BASE_URL` (comma separated). |
 
 `ENVIRONMENT=production` also rejects `DEMO_MODE=true` unless
 `ALLOW_DEMO_IN_PRODUCTION=true`. That opt-in exists only for an isolated demo

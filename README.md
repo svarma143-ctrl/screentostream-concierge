@@ -548,8 +548,8 @@ docs/              Alexa+ integration, production/storage, AWS blueprint, fricti
 | `GET /api/simulator/status` | Provider, OAuth, MCP, usage, catalog, and agent state |
 | `POST /api/simulator/reset` | Reset demo state and the persisted context chain |
 | `GET /api/events/stream` | Server-Sent Events for TV cards and visual-card updates |
-| `GET /api/catalog` | Public catalog and scenes |
-| `GET /api/usage` | Provider usage and mode |
+| `GET /api/catalog` | Demo catalog and scenes |
+| `GET /api/usage` | Demo provider usage and mode |
 | `GET /api/bookings/{id}/calendar.ics` | Calendar export |
 | `GET /api/health` | Health, MCP floor, protocol info |
 | `GET /docs/alexa-plus` | Human-readable integration page |
