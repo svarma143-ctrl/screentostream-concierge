@@ -606,6 +606,7 @@ For the submission-ready documents, see:
 - **[docs/AWS_ACCOUNT_SETUP.md](docs/AWS_ACCOUNT_SETUP.md)** — from-zero AWS account, IAM, Anthropic first-time-use, credential, and verification guide.
 - **[docs/AWS_ARCHITECTURE_BLUEPRINT.md](docs/AWS_ARCHITECTURE_BLUEPRINT.md)** — AWS architecture, request flows, security, fallback matrix, and test evidence.
 - **[docs/FRICTION_LOG_V2.md](docs/FRICTION_LOG_V2.md)** — guided friction log with BLUF and grade, persona, scoped checklist, pros/cons, severity-ranked findings, questions, recommendations, test environment, and success/failure evidence.
+- **[docs/friction_log_trag.md](docs/friction_log_trag.md)** — Trag-style developer and judge-path friction log covering the repository, Makefile, tests, Docker, and CI rather than the Alexa+ API surface.
 - **[docs/FRICTION_LOG.md](docs/FRICTION_LOG.md)** — detailed engineering log with the full F-01 through F-13 write-ups.
 
 ## Changelog
